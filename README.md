@@ -1,6 +1,6 @@
 # skill-arsenal
 
-Curated [Agent Skills](https://agentskills.io) for AI coding agents — research, writing, and more. Works with Claude Code, Cursor, Gemini CLI, OpenAI Codex, and any tool supporting the Agent Skills standard.
+Curated collection of Claude Code skills — research, writing, and more.
 
 ## Skills
 
@@ -11,52 +11,36 @@ Curated [Agent Skills](https://agentskills.io) for AI coding agents — research
 
 ## Installation
 
-### Claude Code
+### Claude Code (via Plugin Marketplace)
 
 ```bash
-# From the plugin marketplace
+# Register the marketplace
 /plugin marketplace add yanchuk/skill-arsenal
-/plugin install researching-consumer-goods
-/plugin install writing-well
 
-# Or install a single plugin directly
-/plugin install yanchuk/skill-arsenal/researching-consumer-goods
+# Install plugins
+/plugin install researching-consumer-goods@skill-arsenal
+/plugin install writing-well@skill-arsenal
 ```
 
-### Gemini CLI
+### Cursor (via Plugin Marketplace)
 
 ```bash
-# Install all skills
-gemini skills install https://github.com/yanchuk/skill-arsenal.git
-
-# Install a single skill
-gemini skills install https://github.com/yanchuk/skill-arsenal.git --path skills/writing-well
+/plugin-add researching-consumer-goods
+/plugin-add writing-well
 ```
 
-### Cursor
-
-Open **Cursor Settings → Rules → Add Rule → Remote Rule (GitHub)** and enter:
+### Codex
 
 ```
-https://github.com/yanchuk/skill-arsenal/tree/main/skills/writing-well
-https://github.com/yanchuk/skill-arsenal/tree/main/skills/researching-consumer-goods
-```
-
-### OpenAI Codex
-
-```bash
-$skill-installer install skills from https://github.com/yanchuk/skill-arsenal
+Fetch and follow instructions from https://raw.githubusercontent.com/yanchuk/skill-arsenal/refs/heads/main/docs/README.codex.md
 ```
 
 ### Manual (any agent)
 
-Copy the skill directory into your agent's skills folder:
-
 ```bash
-# Clone and copy the skill you need
 git clone https://github.com/yanchuk/skill-arsenal.git
 cp -r skill-arsenal/skills/writing-well ~/.claude/skills/
-# Or: ~/.cursor/skills/ | ~/.gemini/skills/ | ~/.agents/skills/
+# Or: ~/.cursor/skills/ | ~/.agents/skills/
 ```
 
 ## Repo structure
@@ -79,7 +63,7 @@ skill-arsenal/
 ```
 
 - **`plugins/`** — Claude Code plugin marketplace format with manifests
-- **`skills/`** — Universal [agentskills.io](https://agentskills.io) layout (symlinks). Works with Gemini CLI, Cursor, Codex, and any compliant agent
+- **`skills/`** — Universal layout (symlinks). Works with Cursor, Codex, and any compliant agent
 
 ## Local development
 

@@ -2,5 +2,10 @@
   "name": "writing-well",
   "description": "Applies Zinsser's nonfiction writing principles — simplicity, clarity, active voice, clutter elimination — to any text.",
   "version": "1.0.0",
-  "author": "yanchuk"
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["writing", "editing", "copywriting", "clarity"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
 }

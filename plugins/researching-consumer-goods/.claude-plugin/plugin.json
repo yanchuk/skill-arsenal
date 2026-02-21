@@ -2,5 +2,10 @@
   "name": "researching-consumer-goods",
   "description": "Researches consumer products for purchase across global markets. Compares prices, checks availability, finds deals.",
   "version": "1.0.0",
-  "author": "yanchuk"
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["consumer-goods", "price-comparison", "shopping", "market-research"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
 }
