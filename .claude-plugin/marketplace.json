@@ -1,0 +1,24 @@
+{
+  "name": "skill-arsenal",
+  "description": "Curated collection of Claude Code skills — research, writing, and more.",
+  "version": "1.0.0",
+  "pluginRoot": "./plugins",
+  "plugins": [
+    {
+      "source": "researching-consumer-goods",
+      "name": "researching-consumer-goods",
+      "description": "Researches consumer products for purchase across global markets. Compares prices, checks availability, finds deals.",
+      "version": "1.0.0",
+      "category": "research",
+      "tags": ["consumer-goods", "price-comparison", "shopping", "market-research"]
+    },
+    {
+      "source": "writing-well",
+      "name": "writing-well",
+      "description": "Applies Zinsser's nonfiction writing principles — simplicity, clarity, active voice, clutter elimination — to any text.",
+      "version": "1.0.0",
+      "category": "writing",
+      "tags": ["writing", "editing", "copywriting", "clarity"]
+    }
+  ]
+}
