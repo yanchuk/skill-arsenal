@@ -22,17 +22,26 @@ Curated collection of Claude Code skills — research, writing, and more.
 /plugin install writing-well@skill-arsenal
 ```
 
-### Cursor (via Plugin Marketplace)
+### Cursor
 
-```bash
-/plugin-add researching-consumer-goods
-/plugin-add writing-well
+1. Open **Cursor Settings** → **Rules**
+2. In **Project Rules**, click **Add Rule** → **Remote Rule (GitHub)**
+3. Enter the repository URL:
+
+```
+https://github.com/yanchuk/skill-arsenal.git
 ```
 
 ### Codex
 
 ```
 Fetch and follow instructions from https://raw.githubusercontent.com/yanchuk/skill-arsenal/refs/heads/main/docs/README.codex.md
+```
+
+### OpenCode
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/yanchuk/skill-arsenal/refs/heads/main/docs/README.opencode.md
 ```
 
 ### Manual (any agent)
@@ -49,6 +58,9 @@ cp -r skill-arsenal/skills/writing-well ~/.claude/skills/
 skill-arsenal/
 ├── .claude-plugin/
 │   └── marketplace.json        # Claude Code plugin marketplace catalog
+├── docs/                       # Platform-specific install guides
+│   ├── README.codex.md
+│   └── README.opencode.md
 ├── plugins/                    # Claude Code plugin wrappers
 │   ├── researching-consumer-goods/
 │   │   ├── .claude-plugin/plugin.json
