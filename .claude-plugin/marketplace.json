@@ -21,6 +21,13 @@
       "version": "1.0.0",
       "source": "./plugins/writing-well",
       "strict": true
+    },
+    {
+      "name": "plan-review",
+      "description": "Reviews implementation plans and code changes with structured technical analysis across architecture, code quality, testing, performance, and risk.",
+      "version": "1.0.0",
+      "source": "./plugins/plan-review",
+      "strict": true
     }
   ]
 }

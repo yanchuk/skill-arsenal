@@ -1,0 +1,11 @@
+{
+  "name": "plan-review",
+  "description": "Reviews implementation plans and code changes with structured technical analysis across architecture, code quality, testing, performance, and risk.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["code-review", "plan-review", "architecture", "testing", "risk-assessment"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}

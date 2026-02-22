@@ -55,6 +55,7 @@ Codex has native skill discovery — it scans `~/.agents/skills/` at startup, pa
 |-------|-------------|
 | **researching-consumer-goods** | Multi-stage consumer product research with global market comparison |
 | **writing-well** | Zinsser-based nonfiction writing principles for any text |
+| **plan-review** | Structured technical review of plans and code changes |
 
 ## Updating
 
