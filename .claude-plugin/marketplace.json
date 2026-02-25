@@ -28,6 +28,13 @@
       "version": "1.0.0",
       "source": "./plugins/plan-review",
       "strict": true
+    },
+    {
+      "name": "competitor-research",
+      "description": "Research competitors by gathering and analyzing community feedback from Reddit, forums, and review sites.",
+      "version": "1.0.0",
+      "source": "./plugins/competitor-research",
+      "strict": true
     }
   ]
 }

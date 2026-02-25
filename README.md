@@ -9,6 +9,7 @@ Curated collection of Claude Code skills — research, writing, and more.
 | **researching-consumer-goods** | Multi-stage consumer product research. Gathers requirements, searches global markets, compares prices, and generates structured reports. |
 | **writing-well** | Applies Zinsser's nonfiction writing principles to any text — emails, docs, marketing copy, blog posts. Simplicity, clarity, no clutter. |
 | **plan-review** | Structured technical review of plans and code changes. Architecture, code quality, testing, performance, risk — interactive issue-by-issue walkthrough. |
+| **competitor-research** | Gathers and analyzes community feedback about competitors from Reddit, forums, and review sites. Structured analysis with sentiment, quotes, and cross-thread synthesis. |
 
 ## Installation
 
@@ -22,6 +23,7 @@ Curated collection of Claude Code skills — research, writing, and more.
 /plugin install researching-consumer-goods@skill-arsenal
 /plugin install writing-well@skill-arsenal
 /plugin install plan-review@skill-arsenal
+/plugin install competitor-research@skill-arsenal
 ```
 
 ### Cursor
@@ -70,13 +72,17 @@ skill-arsenal/
 │   ├── writing-well/
 │   │   ├── .claude-plugin/plugin.json
 │   │   └── skills/writing-well/
-│   └── plan-review/
+│   ├── plan-review/
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/plan-review/
+│   └── competitor-research/
 │       ├── .claude-plugin/plugin.json
-│       └── skills/plan-review/
+│       └── skills/competitor-research/
 ├── skills/                     # Universal entry point (symlinks into plugins/)
 │   ├── researching-consumer-goods → ../plugins/.../
 │   ├── writing-well → ../plugins/.../
-│   └── plan-review → ../plugins/.../
+│   ├── plan-review → ../plugins/.../
+│   └── competitor-research → ../plugins/.../
 └── README.md
 ```
 

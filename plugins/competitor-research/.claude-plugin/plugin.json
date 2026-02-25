@@ -1,0 +1,11 @@
+{
+  "name": "competitor-research",
+  "description": "Research competitors by gathering and analyzing community feedback from Reddit, forums, and review sites.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["competitor-research", "competitive-intelligence", "reddit-analysis", "community-feedback"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}
