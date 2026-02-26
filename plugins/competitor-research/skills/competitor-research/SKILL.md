@@ -60,18 +60,34 @@ Step 3: SB get_google_search_results — same query, for PAA/Related Searches
 
 PAA (People Also Ask) and Related Searches are competitive intelligence gold — only available from `get_google_search_results`. Always run this as a supplement.
 
+Always pass US geo: SB uses `country_code: "us"`, Jina uses `gl: "us"`, Firecrawl uses `location: "United States"`. Jina and Firecrawl return nearly identical search results (both use Google as backend) — pick one.
+
 **Read (with specialized tools):**
 
-| URL contains | Tool | Why |
-|---|---|---|
-| `reddit.com` | **ScrapingBee `get_page_text`** | Only tool that reliably captures actual comments, vote scores, timestamps |
-| Everything else | **Tavily `tavily_extract`** | Full article + all comments, clean markdown, fastest |
-| (Tavily fails) | **Firecrawl `firecrawl_scrape`** | Fallback — same quality, slightly more noise |
-| (Both fail) | **ScrapingBee `get_page_text`** | Works everywhere but noisiest output |
+**Reddit** — most tools fail. Only one reliable option:
 
-**Reddit-specific notes:** WebFetch typically doesn't work for Reddit (hardcoded block). Jina typically doesn't work for Reddit (network security block). Firecrawl typically doesn't work for Reddit (policy blocklist). These tend to fail silently or with unhelpful errors.
+| Tool | Reddit status | Use |
+|------|---------------|-----|
+| **SB `get_page_text`** | ✅ Only working reader | Actual comments, vote scores, timestamps |
+| Tavily `tavily_extract` | ⚠️ Gets AI summary only | Cross-thread discovery (curated quotes from multiple subs) |
+| WebFetch | ❌ Hardcoded block | — |
+| Jina `read_url` | ❌ Network security block | — |
+| Firecrawl `firecrawl_scrape` | ❌ Policy blocklist | — |
 
-**Tavily gotcha:** The `country` param requires `"United States"` — it rejects ISO codes like `"us"`.
+**Non-Reddit** (blogs, forums, review sites):
+
+| Priority | Tool | Why |
+|----------|------|-----|
+| 1 | **Tavily `tavily_extract`** | Full article + all comments, clean markdown, fastest |
+| 2 | **Firecrawl `firecrawl_scrape`** | Full article + comments + rich metadata (fallback) |
+| 3 | **SB `get_page_text`** | Full content but noisy (nav, ads, sidebar) |
+| 4 | **Jina `read_url`** | Cleanest article body, but misses comments |
+| 5 | **WebFetch** | AI-summarized, no raw content — quick overview only |
+
+**Tavily gotchas:**
+- The `country` param requires `"United States"` — it rejects ISO codes like `"us"`
+- Reddit extraction returns Reddit's AI "Related Answers" summary, not actual user comments
+- Use `search_depth: "advanced"` for better results (slower but more thorough)
 
 ### Analyze: Reddit Thread Format
 
