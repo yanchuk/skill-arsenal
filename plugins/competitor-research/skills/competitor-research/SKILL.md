@@ -20,74 +20,44 @@ Different web tools work for different sites, and getting this wrong wastes cred
 
 ## Tool Routing
 
-The single most important thing to internalize: **Reddit is special.** Most tools fail on Reddit. Check which tools are available in your environment. The skill works with basic web tools; specialized MCP servers improve Reddit coverage and result quality.
+Invoke the `web-tool-routing` skill for tool detection, fallback chains, and credit management. Below are domain-specific overrides for competitor research.
 
-### Universal Approach (Default)
+### Reddit Override (Special Case)
 
-Works with commonly available tools (WebSearch, WebFetch, Jina read_url, etc.):
+> Differs from default chain: only ScrapingBee works for Reddit. Default chain's preferred free tools (WebFetch, Jina) and mid-tier tools (Tavily, Firecrawl) are all blocked by Reddit.
 
-**Search:**
-```
-Step 1: WebSearch / Jina search_web — "{product name} review feedback"
-Step 2: WebSearch / Jina search_web — "{product name} site:reddit.com"
-```
+Reddit blocks most tools. Only one reliable reader:
 
-**Read:**
+| Tool | Reddit status | Cost | Use |
+|------|--------------|------|-----|
+| **ScrapingBee `get_page_text`** | ✅ Only working reader | 1 credit | Actual comments, votes, timestamps |
+| **Tavily `tavily_extract`** | ⚠️ AI summary only | 1 credit | Cross-thread discovery (curated quotes) |
+| WebFetch | ❌ Blocked | — | — |
+| Jina `read_url` | ❌ Blocked | — | — |
+| Firecrawl `firecrawl_scrape` | ❌ Blocked | — | — |
 
-| URL contains | Tool | Notes |
-|---|---|---|
-| `reddit.com` | **WebFetch** or **Jina `read_url`** | WebFetch typically doesn't work well for Reddit; Jina may have limited success. Try both — if neither captures comments, note the limitation and work with what you get |
-| Everything else | **WebFetch** or **Jina `read_url`** | Either works well for blogs, forums, and review sites |
+### Non-Reddit Override (Forums, Review Sites)
 
-From the combined results, build a thread list. **Filter out:**
-- The competitor's own website (e.g., competitor.com)
-- Obvious affiliate/sponsored content
-- Duplicate URLs
+> Differs from default chain: prioritizes comment-capturing tools (Tavily, Firecrawl) over clean-article tools. Default chain starts with free WebFetch/Jina which extract article body but miss user comments — critical data for competitive intelligence.
 
-### Advanced Tool Routing (Reference — Benchmarked Feb 2026)
-
-If you have ScrapingBee, Tavily, or Firecrawl MCP servers installed, these provide significantly better results — especially for Reddit.
-
-**Search (with ScrapingBee):**
-
-Use **ScrapingBee `fast_search`** as the primary search tool. It finds the most Reddit threads (3 vs 0-1 for others) and forum threads.
-
-```
-Step 1: SB fast_search — "{product name} review feedback", country_code: "us"
-Step 2: SB fast_search — "{product name} site:reddit.com", country_code: "us"
-Step 3: SB get_google_search_results — same query, for PAA/Related Searches
-```
-
-PAA (People Also Ask) and Related Searches are competitive intelligence gold — only available from `get_google_search_results`. Always run this as a supplement.
-
-Always pass US geo: SB uses `country_code: "us"`, Jina uses `gl: "us"`, Firecrawl uses `location: "United States"`. Jina and Firecrawl return nearly identical search results (both use Google as backend) — pick one.
-
-**Read (with specialized tools):**
-
-**Reddit** — most tools fail. Only one reliable option:
-
-| Tool | Reddit status | Use |
-|------|---------------|-----|
-| **SB `get_page_text`** | ✅ Only working reader | Actual comments, vote scores, timestamps |
-| Tavily `tavily_extract` | ⚠️ Gets AI summary only | Cross-thread discovery (curated quotes from multiple subs) |
-| WebFetch | ❌ Hardcoded block | — |
-| Jina `read_url` | ❌ Network security block | — |
-| Firecrawl `firecrawl_scrape` | ❌ Policy blocklist | — |
-
-**Non-Reddit** (blogs, forums, review sites):
+For competitor research, prioritize tools that capture **comments** (not just article body):
 
 | Priority | Tool | Why |
 |----------|------|-----|
-| 1 | **Tavily `tavily_extract`** | Full article + all comments, clean markdown, fastest |
-| 2 | **Firecrawl `firecrawl_scrape`** | Full article + comments + rich metadata (fallback) |
-| 3 | **SB `get_page_text`** | Full content but noisy (nav, ads, sidebar) |
-| 4 | **Jina `read_url`** | Cleanest article body, but misses comments |
-| 5 | **WebFetch** | AI-summarized, no raw content — quick overview only |
+| 1 | Tavily `tavily_extract` | Full article + comments, 1 credit (renewable) |
+| 2 | Firecrawl `firecrawl_scrape` | Full article + comments + metadata, 1 credit |
+| 3 | ScrapingBee `get_page_text` | Full content but noisy, 1 credit |
+| 4 | Jina `read_url` | Clean body but misses comments, free |
+| 5 | WebFetch | AI-summarized, free — quick overview only |
 
-**Tavily gotchas:**
-- The `country` param requires `"United States"` — it rejects ISO codes like `"us"`
-- Reddit extraction returns Reddit's AI "Related Answers" summary, not actual user comments
-- Use `search_depth: "advanced"` for better results (slower but more thorough)
+### Search Enhancement (if ScrapingBee available)
+
+ScrapingBee `get_google_search_results` provides PAA (People Also Ask) and Related Searches — competitive intelligence gold. Always run as supplement alongside the standard search chain.
+
+### Tavily Gotchas
+- `country` param requires `"United States"` — rejects ISO codes
+- Reddit extraction returns AI summary, not actual user comments
+- Use `search_depth: "advanced"` for better results
 
 ### Analyze: Reddit Thread Format
 
