@@ -105,9 +105,14 @@ OpenCode discovers skills from `~/.config/opencode/skills/` at startup. Skill Ar
 
 | Skill | Description |
 |-------|-------------|
-| **researching-consumer-goods** | Multi-stage consumer product research with global market comparison |
-| **writing-well** | Zinsser-based nonfiction writing principles for any text |
-| **plan-review** | Structured technical review of plans and code changes |
+| **web-tool-routing** | Shared web tool routing, detection, and fallback chains (infrastructure) |
+| **prompt-creator** | Prompt engineering best practices from Anthropic and OpenAI docs (infrastructure) |
+| **prompt-74** | High-stakes prompt methodology — PROMPT-74 framework for decisions and deep research (infrastructure) |
+| **web-research** | Web research methodology with wave-based execution and structured output (domain) |
+| **competitor-research** | Community feedback analysis from Reddit, forums, and review sites (domain) |
+| **researching-consumer-goods** | Multi-stage consumer product research with global market comparison (domain) |
+| **writing-well** | Zinsser-based nonfiction writing principles for any text (standalone) |
+| **plan-review** | Structured technical review of plans and code changes (standalone) |
 
 ## Updating
 

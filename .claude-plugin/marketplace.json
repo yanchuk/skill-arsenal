@@ -9,6 +9,41 @@
   },
   "plugins": [
     {
+      "name": "web-tool-routing",
+      "description": "Web tool routing, detection, and fallback chains for any skill that accesses websites. Provides credit-aware tool selection.",
+      "version": "1.0.0",
+      "source": "./plugins/web-tool-routing",
+      "strict": true
+    },
+    {
+      "name": "prompt-creator",
+      "description": "Prompt engineering best practices from Anthropic and OpenAI docs. Crafts effective prompts for any LLM.",
+      "version": "1.0.0",
+      "source": "./plugins/prompt-creator",
+      "strict": true
+    },
+    {
+      "name": "prompt-74",
+      "description": "High-stakes prompt engineering methodology for real-world decisions and deep research. Generates structured, evidence-driven prompts using the PROMPT-74 framework.",
+      "version": "1.0.0",
+      "source": "./plugins/prompt-74",
+      "strict": true
+    },
+    {
+      "name": "web-research",
+      "description": "Web research methodology with wave-based execution, query strategies, and structured output.",
+      "version": "1.0.0",
+      "source": "./plugins/web-research",
+      "strict": true
+    },
+    {
+      "name": "competitor-research",
+      "description": "Research competitors by gathering and analyzing community feedback from Reddit, forums, and review sites.",
+      "version": "1.0.0",
+      "source": "./plugins/competitor-research",
+      "strict": true
+    },
+    {
       "name": "researching-consumer-goods",
       "description": "Researches consumer products for purchase across global markets. Compares prices, checks availability, finds deals.",
       "version": "1.0.0",
@@ -27,13 +62,6 @@
       "description": "Reviews implementation plans and code changes with structured technical analysis across architecture, code quality, testing, performance, and risk.",
       "version": "1.0.0",
       "source": "./plugins/plan-review",
-      "strict": true
-    },
-    {
-      "name": "competitor-research",
-      "description": "Research competitors by gathering and analyzing community feedback from Reddit, forums, and review sites.",
-      "version": "1.0.0",
-      "source": "./plugins/competitor-research",
       "strict": true
     }
   ]
