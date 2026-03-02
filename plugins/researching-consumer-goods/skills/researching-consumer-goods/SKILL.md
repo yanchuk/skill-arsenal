@@ -64,7 +64,7 @@ digraph workflow {
 
 **Goal:** Understand what the user needs before any research begins.
 
-Using AskUserQuestion (or conversational Q&A), gather the following. Ask only what's missing — if the user's initial request already provides some answers, skip those.
+Invoke the `prompt-74` skill's Rule 10 (iterative questioning — one question at a time, up to 10) to structure the requirements interview. Use the universal and domain-specific questions below as the question pool. Ask only what's missing — if the user's initial request already provides some answers, skip those.
 
 **Universal questions (always ask if not provided):**
 
@@ -98,7 +98,9 @@ Ask the user which path they prefer:
 
 ### Path B — Generate external AI prompt
 
-- Generate structured prompt from `references/external-ai-prompts.md`
+- Invoke the `prompt-74` skill for high-stakes prompt methodology (ownership framing, 10 rules, verification requirements) when structuring the research prompt
+- Invoke the `prompt-creator` skill for model-specific formatting (Claude XML / OpenAI roles / generic markdown)
+- Generate structured prompt from `references/external-ai-prompts.md` using the Path B template pattern from prompt-creator, structured with PROMPT-74 methodology
 - Parameterize with: category, geo, budget, currency, priority, language, review sites, specific requirements
 - User pastes into ChatGPT Deep Research / Gemini Deep Research / Claude Extended Thinking
 - User returns with item list → proceed to Stage 3
@@ -112,42 +114,46 @@ Ask the user which path they prefer:
 
 **Goal:** Find real prices, check availability, verify sizes/variants across markets.
 
-### 3a. Tool Detection (CRITICAL — run first)
+### 3a-3b. Tool Detection & Fallback Chain
 
-Probe available MCP tools using ToolSearch. Classify capability level:
+Invoke the `web-tool-routing` skill for tool detection (capability levels 0-4),
+page reading fallback chain (7 tiers), web search fallback chain, and credit budget management.
 
-| Level | Tools Available | Strategy |
-|-------|----------------|----------|
-| 4 (FULL) | Built-in + Jina + Firecrawl + ScrapingBee + browser | Full chain, anti-bot capable |
-| 3 (STRONG) | Built-in + Jina + (Firecrawl OR ScrapingBee) | Strong chain, most sites |
-| 2 (BASIC) | Built-in + (Jina OR Tavily) | Good coverage, no anti-bot bypass |
-| 1 (BASELINE) | WebSearch + WebFetch only (built-in) | Always available. Search + basic fetch. |
-| 0 (NONE) | No web tools at all | Recommend MCP installs + external AI prompt |
+Below are domain-specific overrides for consumer goods research.
 
-**ToolSearch probes to run:**
-```
-ToolSearch("+jina read")
-ToolSearch("+firecrawl scrape")
-ToolSearch("+scrapingbee")
-ToolSearch("+tavily search")
-ToolSearch("+playwright navigate")
-```
+#### Reading: E-Commerce Product Pages (Quality-Optimized Override)
 
-**At Level 0-1**, output MCP installation commands and suggest Path B (external AI prompt):
-```
-claude mcp add jina -s user -- npx -y @anthropic/jina-mcp-server
-claude mcp add firecrawl-mcp -s user -- npx -y firecrawl-mcp
-claude mcp add scrapingbee -s user -- npx -y scrapingbee-mcp
-```
+> Differs from default chain: jumps past free tools to JS-capable tiers first. Default chain starts with WebFetch/Jina, but e-commerce sites (Amazon, Allegro, eBay) rely on JS rendering for prices, size selectors, and variant availability — free tools return empty or stale data.
 
-### 3b. Tool Fallback Chain
+| Priority | Tool | Why |
+|----------|------|-----|
+| 1 | **Firecrawl `firecrawl_scrape`** (waitFor=2000) | JS rendering captures dynamic pricing, size dropdowns, variant selectors |
+| 2 | **ScrapingBee `get_page_text`** (render_js=true) | Anti-bot bypass for Cloudflare-protected stores (Amazon, some EU retailers) |
+| 3 | **Tavily `tavily_extract`** | Good for simpler stores and price aggregator pages (Ceneo, Idealo) |
+| 4 | **Jina `read_url`** | Clean extraction — works for static product pages and smaller retailers |
+| 5 | **WebFetch** | AI-summarized — quick price check only, misses variants and availability |
 
-Read `references/tool-fallback-chain.md` for the complete tiered fallback strategy. Key principles:
+#### Reading: Price Aggregator Pages
 
-- **Built-in tools first, always.** WebSearch and WebFetch are the baseline — always available, truly unlimited, no MCP required. Free MCP tools (Jina, Tavily) enhance with geo-targeting and better extraction but have consumable free tiers (Jina: 10M tokens; Tavily: limited free requests). Paid tools are escalation only.
-- **Paid tools for failures only.** Firecrawl (1 credit/page) and ScrapingBee (1-10 credits) are escalation tiers.
-- **Browser tools are last resort.** Playwright and Chrome MCP are slow, context-heavy, and should only be used when all API tools fail.
-- **Mark UNVERIFIED when all tiers fail.** Include the manual-check URL so the user can verify themselves.
+> Differs from default chain: free tools work well here — aggregators are simpler than individual stores. Default chain order is fine, but Jina/Tavily are preferred over WebFetch because aggregators list multiple prices in structured tables that AI-summarization loses.
+
+| Priority | Tool | Why |
+|----------|------|-----|
+| 1 | **Jina `read_url`** | Clean markdown preserves price comparison tables |
+| 2 | **Tavily `tavily_extract`** | Good structured extraction of multi-store price lists |
+| 3 | **WebFetch** | AI summary — gets the cheapest price but loses the full comparison |
+| 4 | **Firecrawl `firecrawl_scrape`** | Overkill for aggregators, save credits for product pages |
+
+#### Search Priority (Consumer Goods Override)
+
+> Differs from default chain: adds geo-targeted search and price-focused queries. Default chain optimizes for broad coverage; this override prioritizes local marketplace discovery and price comparison.
+
+| Priority | Tool | Strength |
+|----------|------|----------|
+| 1 | **WebSearch** / **Jina `search_web`** (with geo params) | Free — find local retailers, aggregators, and deals |
+| 2 | **Tavily `tavily_search`** (include_domains=[aggregators]) | Domain-filtered search for price aggregators (Ceneo, Idealo, Google Shopping) |
+| 3 | **ScrapingBee `get_google_search_results`** | PAA reveals related products and comparison queries |
+| 4 | **Firecrawl `firecrawl_search`** | Returns scraped content — useful when search snippets don't show prices |
 
 ### 3c. Team Decision (Claude Code only)
 
@@ -164,7 +170,7 @@ Otherwise: sequential verification in the current session.
 For each item:
 1. **Check local price aggregators first** — search Ceneo, Idealo, Google Shopping, PriceRunner (whichever serves the user's country) for the item. A single aggregator page reveals which stores carry it and at what price, saving many individual lookups. See `references/site-strategies.md` Pattern 5.
 2. Search geo-relevant retailers for the item (use local marketplace + international stores) — include stores discovered via aggregators
-3. Scrape product page using the fallback chain from `references/tool-fallback-chain.md` — verify the best prices found on aggregators directly on the actual store (aggregator prices may be cached/stale)
+3. Scrape product page using the fallback chain from the `web-tool-routing` skill — verify the best prices found on aggregators directly on the actual store (aggregator prices may be cached/stale)
 4. Check size/variant/color availability — different colors/modifications on the same page can have different prices and different size availability. Report price per variant, not just the default. Try ALL variants before marking OOS.
 5. Record per-item: price, stock status, URL, tool used, tier level, verification confidence
 6. When encountering anti-bot blocks, apply pattern from `references/site-strategies.md`

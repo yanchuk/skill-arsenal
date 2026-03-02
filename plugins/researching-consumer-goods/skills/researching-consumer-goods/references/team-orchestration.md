@@ -129,7 +129,7 @@ availability and pricing for {category} items in {country}.
 - International stores: {international_stores}
 
 ## Tool Fallback Chain
-{paste full chain from tool-fallback-chain.md}
+{use the web-tool-routing skill for the complete fallback chain}
 
 ## Credit Budget
 - Firecrawl: {firecrawl_budget} credits
