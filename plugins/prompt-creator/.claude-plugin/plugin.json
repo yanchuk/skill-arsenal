@@ -1,0 +1,11 @@
+{
+  "name": "prompt-creator",
+  "description": "Prompt engineering best practices from Anthropic and OpenAI docs. Crafts effective prompts for any LLM.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["prompt-engineering", "llm-prompts", "claude-prompts", "openai-prompts", "system-prompts"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}

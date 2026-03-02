@@ -1,0 +1,11 @@
+{
+  "name": "web-tool-routing",
+  "description": "Web tool routing, detection, and fallback chains for any skill that accesses websites. Provides credit-aware tool selection.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["web-tools", "tool-routing", "fallback-chain", "credit-management", "mcp-tools"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}

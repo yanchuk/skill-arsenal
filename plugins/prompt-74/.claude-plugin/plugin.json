@@ -1,0 +1,11 @@
+{
+  "name": "prompt-74",
+  "description": "High-stakes prompt engineering methodology for real-world decisions and deep research. Generates structured, evidence-driven prompts using the PROMPT-74 framework.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["prompt-engineering", "methodology", "high-stakes", "decision-making", "deep-research"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}
