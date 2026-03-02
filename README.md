@@ -29,7 +29,49 @@ Curated collection of Claude Code skills — research, writing, and more.
 
 ## How it works
 
-Skills form three layers: **infrastructure** (how to access the web, how to write prompts), **domain** (what to research + invoke infrastructure at runtime), and **standalone** (direct output, no dependencies). Here's what that looks like — just say what you need, and the right skills activate automatically:
+Skills form three layers: **infrastructure** (how to access the web, how to write prompts), **domain** (what to research + invoke infrastructure at runtime), and **standalone** (direct output, no dependencies).
+
+```mermaid
+graph TB
+    subgraph Standalone["Standalone Skills"]
+        WW["writing-well"]
+        PR["plan-review"]
+    end
+
+    subgraph Domain["Domain Skills"]
+        WR["web-research"]
+        CR["competitor-research"]
+        RCG["researching-consumer-goods"]
+    end
+
+    subgraph Infrastructure["Infrastructure Skills"]
+        WTR["web-tool-routing"]
+        PC["prompt-creator"]
+        P74["prompt-74"]
+    end
+
+    %% Domain → Infrastructure invocations
+    WR -->|"invokes"| WTR
+    CR -->|"invokes"| WTR
+    RCG -->|"invokes"| WTR
+    RCG -.->|"Path B"| PC
+    RCG -->|"invokes"| P74
+
+    %% Infrastructure → Infrastructure
+    P74 -->|"invokes"| PC
+
+    %% Styling
+    style WTR fill:#4a9eff,stroke:#2670c2,color:#fff
+    style PC fill:#4a9eff,stroke:#2670c2,color:#fff
+    style P74 fill:#4a9eff,stroke:#2670c2,color:#fff
+    style WR fill:#50c878,stroke:#2e8b57,color:#fff
+    style CR fill:#50c878,stroke:#2e8b57,color:#fff
+    style RCG fill:#50c878,stroke:#2e8b57,color:#fff
+    style WW fill:#ffa64d,stroke:#cc7a30,color:#fff
+    style PR fill:#ffa64d,stroke:#cc7a30,color:#fff
+```
+
+Here's what that looks like in practice — just say what you need, and the right skills activate automatically:
 
 > **"Find me trail running shoes under $150"**
 >
