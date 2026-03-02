@@ -1,0 +1,11 @@
+{
+  "name": "web-research",
+  "description": "Web research methodology with wave-based execution, query strategies, and structured output.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["web-research", "search-strategy", "research-methodology", "wave-execution"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}
