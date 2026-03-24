@@ -7,7 +7,7 @@ Guide for using Skill Arsenal with OpenAI Codex via native skill discovery.
 Tell Codex:
 
 ```
-Clone https://github.com/yanchuk/skill-arsenal to ~/.agents/skill-arsenal, then create directory ~/.agents/skills if it doesn't exist, then symlink ~/.agents/skill-arsenal/skills to ~/.agents/skills/skill-arsenal, then restart.
+Install Skill Arsenal for Codex by cloning or updating https://github.com/yanchuk/skill-arsenal in ~/.agents/skill-arsenal, ensuring ~/.agents/skills exists, removing any existing ~/.agents/skills/skill-arsenal entry, recreating ~/.agents/skills/skill-arsenal as a symlink to ~/.agents/skill-arsenal/skills, verifying that ~/.agents/skills/skill-arsenal/writing-well/SKILL.md exists, then restarting Codex.
 ```
 
 ## Manual Installation
@@ -17,37 +17,64 @@ Clone https://github.com/yanchuk/skill-arsenal to ~/.agents/skill-arsenal, then 
 - OpenAI Codex CLI
 - Git
 
-### Steps
+### macOS / Linux
 
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/yanchuk/skill-arsenal.git ~/.agents/skill-arsenal
-   ```
+```bash
+# 1. Install Skill Arsenal or update an existing clone
+if [ -d ~/.agents/skill-arsenal ]; then
+  cd ~/.agents/skill-arsenal && git pull
+else
+  git clone https://github.com/yanchuk/skill-arsenal.git ~/.agents/skill-arsenal
+fi
 
-2. Create the skills symlink:
-   ```bash
-   mkdir -p ~/.agents/skills
-   ln -s ~/.agents/skill-arsenal/skills ~/.agents/skills/skill-arsenal
-   ```
+# 2. Create the Codex skills directory
+mkdir -p ~/.agents/skills
 
-3. Restart Codex.
+# 3. Remove any old link or directory at the target path
+rm -rf ~/.agents/skills/skill-arsenal
+
+# 4. Create the symlink Codex will scan
+ln -s ~/.agents/skill-arsenal/skills ~/.agents/skills/skill-arsenal
+```
 
 ### Windows
 
-Use a junction instead of a symlink (works without Developer Mode):
+Use a junction instead of a symlink. It works without Developer Mode:
 
 ```powershell
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
+if (Test-Path "$env:USERPROFILE\.agents\skill-arsenal") {
+  git -C "$env:USERPROFILE\.agents\skill-arsenal" pull
+} else {
+  git clone https://github.com/yanchuk/skill-arsenal.git "$env:USERPROFILE\.agents\skill-arsenal"
+}
+
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills" | Out-Null
+Remove-Item "$env:USERPROFILE\.agents\skills\skill-arsenal" -Force -Recurse -ErrorAction SilentlyContinue
 cmd /c mklink /J "$env:USERPROFILE\.agents\skills\skill-arsenal" "$env:USERPROFILE\.agents\skill-arsenal\skills"
 ```
 
+### Verify Installation
+
+Use one quick check and one full check:
+
+```bash
+ls ~/.agents/skills/skill-arsenal/writing-well/SKILL.md
+find -L ~/.agents/skills/skill-arsenal -maxdepth 2 -name SKILL.md | sort
+```
+
+The `find -L` form matters. `skills/` is a directory of symlinks, so shallow checks that do not follow symlinks can look broken even when the install is correct.
+
+After verification, restart Codex.
+
 ## How It Works
 
-Codex has native skill discovery — it scans `~/.agents/skills/` at startup, parses SKILL.md frontmatter, and loads skills on demand. Skill Arsenal skills are made visible through a single symlink:
+Codex scans `~/.agents/skills/` at startup, reads `SKILL.md` frontmatter, and loads skills on demand. Skill Arsenal becomes visible through one top-level symlink or junction:
 
 ```
 ~/.agents/skills/skill-arsenal/ → ~/.agents/skill-arsenal/skills/
 ```
+
+Inside the repo, `skills/` is a directory of symlinks into `plugins/.../skills/...`. That keeps one public entry point for Codex while preserving the plugin layout used by the repo.
 
 ## Available Skills
 
@@ -68,7 +95,7 @@ Codex has native skill discovery — it scans `~/.agents/skills/` at startup, pa
 cd ~/.agents/skill-arsenal && git pull
 ```
 
-Skills update instantly through the symlink.
+Then restart Codex so it rescans `~/.agents/skills/` and reloads the updated skills.
 
 ## Uninstalling
 
@@ -87,9 +114,10 @@ Optionally delete the clone: `rm -rf ~/.agents/skill-arsenal`
 
 ### Skills not showing up
 
-1. Verify the symlink: `ls -la ~/.agents/skills/skill-arsenal`
-2. Check skills exist: `ls ~/.agents/skill-arsenal/skills`
-3. Restart Codex — skills are discovered at startup
+1. Verify the top-level link: `ls -ld ~/.agents/skills/skill-arsenal`
+2. Verify one skill resolves through the Codex-visible path: `ls ~/.agents/skills/skill-arsenal/writing-well/SKILL.md`
+3. Follow symlinks when checking the full bundle: `find -L ~/.agents/skills/skill-arsenal -maxdepth 2 -name SKILL.md | sort`
+4. Restart Codex. Skills are discovered at startup.
 
 ### Windows junction issues
 
