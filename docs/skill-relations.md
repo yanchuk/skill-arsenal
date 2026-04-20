@@ -1,9 +1,14 @@
 # Skill Relations
 
-Architecture diagram showing the three-layer skill system and dependency relationships.
+Architecture diagram showing the four-layer skill system and dependency relationships.
 
 ```mermaid
 graph TB
+    subgraph Orchestration["Orchestration Skills"]
+        GO["go"]
+        HP["harness-protocol"]
+    end
+
     subgraph Standalone["Standalone Skills"]
         WW["writing-well"]
         PR["plan-review"]
@@ -20,6 +25,10 @@ graph TB
         PC["prompt-creator"]
         P74["prompt-74"]
     end
+
+    %% Orchestration → other skills
+    GO -->|"invokes"| HP
+    GO -->|"invokes"| PR
 
     %% Domain → Infrastructure invocations
     WR -->|"invokes"| WTR
@@ -40,10 +49,13 @@ graph TB
     style RCG fill:#50c878,stroke:#2e8b57,color:#fff
     style WW fill:#ffa64d,stroke:#cc7a30,color:#fff
     style PR fill:#ffa64d,stroke:#cc7a30,color:#fff
+    style GO fill:#c678dd,stroke:#8e3da8,color:#fff
+    style HP fill:#c678dd,stroke:#8e3da8,color:#fff
 ```
 
 ## Legend
 
+- **Purple (Orchestration):** End-to-end pipeline skills that coordinate other skills and sub-agents
 - **Blue (Infrastructure):** Shared capabilities invoked by domain skills at runtime via the Skill tool
 - **Green (Domain):** Research/analysis skills that invoke infrastructure + add domain-specific logic and overrides
 - **Orange (Standalone):** Independent skills with no cross-skill dependencies

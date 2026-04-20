@@ -1,0 +1,11 @@
+{
+  "name": "go",
+  "description": "End-to-end feature pipeline: plan → harness protocol → plan-review → Codex audit → execute → simplify → final Codex audit. Runs inside an isolated git worktree. Project-agnostic — detects the project's verification commands at runtime.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["pipeline", "orchestrator", "harness", "codex", "worktree", "end-to-end"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}

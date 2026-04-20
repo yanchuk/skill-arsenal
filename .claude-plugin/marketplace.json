@@ -63,6 +63,20 @@
       "version": "1.0.0",
       "source": "./plugins/plan-review",
       "strict": true
+    },
+    {
+      "name": "harness-protocol",
+      "description": "Orchestrator → Developer → Verifier → Auditor harness for multi-sprint / multi-file work. Generator never self-evaluates. >9/10 per-criterion threshold. Project-agnostic.",
+      "version": "1.0.0",
+      "source": "./plugins/harness-protocol",
+      "strict": true
+    },
+    {
+      "name": "go",
+      "description": "End-to-end feature pipeline: plan → harness protocol → plan-review → Codex audit → execute → simplify → final Codex audit. Runs inside an isolated git worktree. Codex is optional; skipped when CLI unavailable. Project-agnostic.",
+      "version": "1.0.0",
+      "source": "./plugins/go",
+      "strict": true
     }
   ]
 }

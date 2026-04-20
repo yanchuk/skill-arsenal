@@ -1,0 +1,11 @@
+{
+  "name": "harness-protocol",
+  "description": "Orchestrator → Developer → Verifier → Auditor harness for multi-sprint / multi-file work. Generator never self-evaluates. >9/10 per-criterion threshold. Project-agnostic.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["harness", "orchestrator", "developer-verifier-auditor", "sub-agents", "quality-gate"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}

@@ -27,12 +27,24 @@ Curated collection of Claude Code skills — research, writing, and more.
 | **writing-well** | Applies Zinsser's nonfiction writing principles to any text — emails, docs, marketing copy, blog posts. Simplicity, clarity, no clutter. |
 | **plan-review** | Structured technical review of plans and code changes. Architecture, code quality, testing, performance, risk — interactive issue-by-issue walkthrough. |
 
+### Orchestration (coordinate sub-agents end-to-end)
+
+| Skill | Description |
+|-------|-------------|
+| **harness-protocol** | Orchestrator → Developer → Verifier → Auditor pattern for multi-sprint / multi-file work. Generator never self-evaluates. Hard >9/10 per-criterion threshold. Project-agnostic — discovers the project's verification commands at runtime. |
+| **go** | End-to-end feature pipeline: plan → harness protocol → `plan-review` → Codex plan audit → execute with strict harness → `simplify` → final Codex audit (E2E gaps / edge cases / over-engineering). Runs inside an isolated git worktree. Codex is optional — skipped cleanly when the CLI isn't available. Project-agnostic. |
+
 ## How it works
 
 Skills form three layers: **infrastructure** (how to access the web, how to write prompts), **domain** (what to research + invoke infrastructure at runtime), and **standalone** (direct output, no dependencies).
 
 ```mermaid
 graph TB
+    subgraph Orchestration["Orchestration Skills"]
+        GO["go"]
+        HP["harness-protocol"]
+    end
+
     subgraph Standalone["Standalone Skills"]
         WW["writing-well"]
         PR["plan-review"]
@@ -49,6 +61,10 @@ graph TB
         PC["prompt-creator"]
         P74["prompt-74"]
     end
+
+    %% Orchestration → other skills
+    GO -->|"invokes"| HP
+    GO -->|"invokes"| PR
 
     %% Domain → Infrastructure invocations
     WR -->|"invokes"| WTR
@@ -69,6 +85,8 @@ graph TB
     style RCG fill:#50c878,stroke:#2e8b57,color:#fff
     style WW fill:#ffa64d,stroke:#cc7a30,color:#fff
     style PR fill:#ffa64d,stroke:#cc7a30,color:#fff
+    style GO fill:#c678dd,stroke:#8e3da8,color:#fff
+    style HP fill:#c678dd,stroke:#8e3da8,color:#fff
 ```
 
 Here's what that looks like in practice — just say what you need, and the right skills activate automatically:
@@ -108,6 +126,12 @@ Here's what that looks like in practice — just say what you need, and the righ
 >
 > Standalone skills — direct output, no other skills invoked.
 
+> **"/go add a rate-limit middleware"** (full pipeline)
+>
+> `go` → `harness-protocol` → `plan-review` → Codex (optional) → `superpowers:executing-plans` → `simplify` → Codex final audit
+>
+> Creates a worktree, writes a plan, auto-accepts plan-review recommendations, commits the plan, runs a Codex plan audit (skipped cleanly if Codex isn't installed), executes sprint-by-sprint with fresh Developer/Verifier/Auditor sub-agents per sprint, simplifies, then runs a final Codex audit that must return findings in three labeled buckets (E2E gaps, edge cases, over-engineering). Project-agnostic — detects the project's verification gate from `.claude/rules/`, `package.json`, or `Makefile`.
+
 ## Installation
 
 ### Claude Code (via Plugin Marketplace)
@@ -125,6 +149,8 @@ Here's what that looks like in practice — just say what you need, and the righ
 /plugin install researching-consumer-goods@skill-arsenal
 /plugin install writing-well@skill-arsenal
 /plugin install plan-review@skill-arsenal
+/plugin install harness-protocol@skill-arsenal
+/plugin install go@skill-arsenal
 ```
 
 > **Installation order:** Install infrastructure skills first — domain skills invoke them at runtime.
@@ -177,7 +203,9 @@ skill-arsenal/
 │   ├── competitor-research/    # Domain
 │   ├── researching-consumer-goods/  # Domain
 │   ├── writing-well/           # Standalone
-│   └── plan-review/            # Standalone
+│   ├── plan-review/            # Standalone
+│   ├── harness-protocol/       # Orchestration
+│   └── go/                     # Orchestration
 ├── skills/                     # Universal entry point (symlinks into plugins/)
 │   ├── web-tool-routing → ../plugins/.../
 │   ├── prompt-creator → ../plugins/.../
@@ -186,7 +214,9 @@ skill-arsenal/
 │   ├── competitor-research → ../plugins/.../
 │   ├── researching-consumer-goods → ../plugins/.../
 │   ├── writing-well → ../plugins/.../
-│   └── plan-review → ../plugins/.../
+│   ├── plan-review → ../plugins/.../
+│   ├── harness-protocol → ../plugins/.../
+│   └── go → ../plugins/.../
 ├── CLAUDE.md                   # Repo conventions and architecture
 └── README.md
 ```

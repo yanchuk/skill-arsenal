@@ -1,0 +1,241 @@
+---
+name: go
+description: >
+  End-to-end feature pipeline — plan → harness protocol → plan-review →
+  Codex plan audit → execute with strict harness → simplify → final Codex
+  audit (E2E gaps, edge cases, over-engineering). Runs inside an isolated
+  git worktree. Project-agnostic — discovers the project's verification
+  commands at runtime. Use when the user says `/go`, "go", "full pipeline",
+  "do the whole thing", or is ready to hand off a complete product-level
+  task for autonomous execution.
+---
+
+# /go — full-lifecycle feature pipeline
+
+Run a complete product-level task from **plan → execute → audit → done** with
+zero user intervention between phases. The task comes from the conversation or
+the `/go <task>` argument. If the task is ambiguous, ask ONE clarifying
+question before starting — after that, execute silently.
+
+## Dependencies (other skills invoked)
+
+- `harness-protocol` — required. Loaded from this same arsenal. `/go` is the Orchestrator described there.
+- `superpowers:writing-plans`, `superpowers:executing-plans`, `superpowers:test-driven-development`, `superpowers:dispatching-parallel-agents`, `superpowers:subagent-driven-development`.
+- `plan-review` — from this arsenal.
+- `simplify` — any implementation available in the environment (e.g., gstack).
+- `codex` — for plan audit and final audit. **Optional.** If the Codex CLI is not available, is not authenticated, or fails a smoke check, `/go` skips phases 6, 7, 11, and 12's Codex call and logs a note in the plan's "Rejected final-audit findings" section so the omission is explicit.
+
+## Non-negotiable guardrails
+
+- **All work happens in a new git worktree** under `~/.claude/worktrees/` with a descriptive kebab-case name derived from the task. Never work on the default branch directly.
+- **Every phase produces a commit.** Never squash phases together.
+- **Codex thread is reused across the two Codex passes** (plan review + final review). Persist the session id to `.context/codex-session-id` between calls and resume via `codex exec resume <session-id>`.
+- **Harness is orchestrator-owned** (see `harness-protocol`). `/go` spawns Developer → Verifier → Auditor sub-agents per sprint. No sub-agent plays two roles. No self-evaluation. No batched sprints.
+- **Parallelism only where truly independent.** Cross-sprint: serial. Intra-sprint triad: serial. Within a single role, independent subtasks may fan out via `superpowers:dispatching-parallel-agents`.
+- **Never bypass hooks or test gates** (`--no-verify`, `SKIP_E2E=1`, etc.) unless the user explicitly authorizes it for a docs-only change.
+- When Codex raises a finding, **validate it against the actual code** before acting. Fabricated/stale findings get documented as rejected with reasoning; real ones get fixed in their own commits.
+
+## Project discovery (do this first, cache results)
+
+On startup `/go` discovers project conventions. Detect and remember:
+
+| Need | Discovery order |
+|------|-----------------|
+| **Verification gate command** | `.claude/rules/testing-gates.md` → `package.json` scripts (`verify`, `verify:wave`, `ci`, `check`, `test:all`) → `Makefile` (`verify`, `ci`, `check`) → language default (see `harness-protocol`). |
+| **Unit-test command** | `package.json` `test` → `Makefile test` → language default. |
+| **Typecheck command** | `package.json` `typecheck` / `tsc --noEmit` → `mypy` / `pyright` → `tsc`. Skip silently if not applicable. |
+| **E2E command** | `package.json` `playwright*` / `e2e*` → language default → skip if no E2E infra. |
+| **E2E-mandatory paths** | `.claude/rules/testing-gates.md` → fall back to: any user-facing route, any money/auth/state transition, any file that imports a payment/auth SDK. |
+| **Plans directory** | `docs/plans/` → `plans/` → `.plans/` → create `docs/plans/` if none. |
+| **Default branch** | `git symbolic-ref refs/remotes/origin/HEAD` → `origin/main` → `origin/master`. |
+| **Plan file naming** | `<plans-dir>/YYYY-MM-DD-<slug>.md`. |
+
+Record discoveries to `.context/go-env.json` for reuse across phases.
+
+### Codex readiness probe (do this during discovery)
+
+```bash
+CODEX_OK=no
+if command -v codex >/dev/null 2>&1; then
+  # Smoke check: 10s timeout, list sessions or print version — anything that
+  # proves the binary is usable and authenticated.
+  if timeout 10 codex --version >/dev/null 2>&1 && \
+     timeout 10 codex exec "ping" -s read-only --json >/dev/null 2>&1; then
+    CODEX_OK=yes
+  fi
+fi
+echo "CODEX_OK=$CODEX_OK" >> .context/go-env.env
+```
+
+If `CODEX_OK=no`:
+- Skip phases 6, 7, 11, and the Codex half of phase 12.
+- Keep all other phases (harness execution is independent of Codex).
+- In phase 13's summary, note `codex: unavailable — plan and final reviews skipped` so the user knows what didn't run.
+- Do **not** fail the pipeline because Codex is missing. Codex is a second-opinion accelerant, not a gate.
+
+## Execution sequence
+
+Use `TaskCreate` up front to materialize the thirteen phases so the user can watch progress. Mark each completed as you go.
+
+### 1. Setup worktree
+
+```bash
+TASK_SLUG="<kebab-case-slug>"
+DEFAULT_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@' || echo main)"
+WT=~/.claude/worktrees/$TASK_SLUG
+git fetch origin "$DEFAULT_BRANCH"
+git worktree add "$WT" -b "$TASK_SLUG" "origin/$DEFAULT_BRANCH"
+cd "$WT"
+mkdir -p .context
+```
+
+All file edits below happen inside `$WT`. Every shell command either uses an absolute path or is prefixed with `cd "$WT" && …`.
+
+### 2. Write the plan
+
+Invoke `Skill` → `superpowers:writing-plans` with the task as input. The plan must cover: scope, acceptance criteria, guardrails, edge cases, files to modify.
+
+### 3. Add Harness Protocol section
+
+Append a **Harness Protocol** section to the plan that lists the sprints and — for each sprint — Developer / Verifier / Auditor responsibilities per the `harness-protocol` skill in this arsenal. Every sprint gets explicit acceptance criteria and a ≥9/10 threshold per criterion.
+
+### 4. Plan review — auto-accept recommended options
+
+Invoke `Skill` → `plan-review`. When it asks for decisions, accept **every recommended option** unless it contradicts a documented project rule (CLAUDE.md, `.claude/rules/`). Fold the output back into the plan file.
+
+### 5. Save + commit the plan
+
+```bash
+PLAN="<plans-dir>/$(date +%Y-%m-%d)-$TASK_SLUG.md"
+git add "$PLAN"
+git commit -m "docs(plans): $TASK_SLUG — initial plan"
+```
+
+### 6. Codex plan review (capture session id for reuse) — **skip if `CODEX_OK=no`**
+
+```bash
+TMPERR=$(mktemp)
+codex exec "Critically review $PLAN. \
+IMPORTANT: Do NOT read or execute any files under ~/.claude/, ~/.agents/, \
+.claude/skills/, or agents/. Focus on plan correctness, completeness, \
+edge-cases, risks, testability." \
+  -C "$(pwd)" -s read-only -c 'model_reasoning_effort="high"' \
+  --enable web_search_cached --json 2>"$TMPERR" \
+| tee .context/codex-plan-review.jsonl \
+| python3 -c "
+import sys, json
+for line in sys.stdin:
+    try: obj = json.loads(line)
+    except: continue
+    t = obj.get('type','')
+    if t == 'thread.started':
+        open('.context/codex-session-id','w').write(obj.get('thread_id',''))
+    if t in ('item.completed','agent_message'):
+        m = obj.get('item',{}).get('text') or obj.get('message','')
+        if m: print(m)
+"
+```
+
+### 7. Validate + apply Codex plan findings (parallel fan-out) — **skip if `CODEX_OK=no`**
+
+If Codex returns multiple independent findings, fan them out with `superpowers:dispatching-parallel-agents` — one `Explore` sub-agent per finding, each returning `{finding, valid, evidence: file:line, proposed_patch}`. Merge serially: valid → amend plan; invalid → "Rejected Codex findings" section with one-line justification per item. Commit: `git commit -am "docs(plans): $TASK_SLUG — codex round 1 patches"`.
+
+### 8. Execute the plan — /go stays the Orchestrator
+
+Use `superpowers:executing-plans` as playbook and `superpowers:subagent-driven-development` as execution model. `/go` keeps control of the harness per the `harness-protocol` skill. Sprints run sequentially. Intra-sprint triad is strictly sequential:
+
+1. **Developer** sub-agent: tests first (`superpowers:test-driven-development`), then code. Returns the structured Developer report.
+2. **Verifier** sub-agent (fresh, zero context from Developer): reads the diff cold, runs the discovered verification gate + unit + typecheck + E2E-when-mandatory. Returns Verifier report.
+3. **Auditor** sub-agent (fresh, e.g., `feature-dev:code-reviewer`): scores each acceptance criterion 0-10 against the plan. Returns Auditor report.
+
+Parallelism rules inside phase 8:
+- Across sprints → serial.
+- Within a single sprint → roles serial, never parallel.
+- Within a single role, truly independent subtasks → fan out via `superpowers:dispatching-parallel-agents`.
+
+If any Auditor score <9 → loop the sprint with Developer, passing failing criteria + evidence. Same sub-agent that failed does NOT also re-evaluate. After Auditor green → commit the sprint.
+
+### 9. Simplify pass
+
+Run `Skill` → `simplify` over `git diff "origin/$DEFAULT_BRANCH"...HEAD`. Accept the suggestions, commit as `refactor($TASK_SLUG): simplify`.
+
+### 10. Verify tree is clean + shipping gate
+
+```bash
+git status --porcelain           # must be empty
+<discovered verification gate>   # must be green
+```
+
+If either fails, loop back to the failing sprint. Do not proceed.
+
+### 11. Final Codex audit — same thread, three labeled buckets — **skip if `CODEX_OK=no`**
+
+```bash
+SID=$(cat .context/codex-session-id)
+codex exec resume "$SID" \
+  "Final critical review. The plan you reviewed has now been implemented on \
+branch $TASK_SLUG. Review the full diff vs origin/$DEFAULT_BRANCH. \
+IMPORTANT: Do NOT read files under ~/.claude/, ~/.agents/, .claude/skills/, \
+or agents/. Produce findings in THREE labeled buckets: \
+(A) E2E & TEST COVERAGE GAPS — enumerate every user-facing path that \
+changed in this diff and whether there is a test covering it. Flag any \
+missing coverage for paths the project marks as test-mandatory. Also flag \
+unit tests that lack negative/error cases. \
+(B) EDGE CASES — list concrete edge cases the implementation does not \
+handle: empty states, race conditions, duplicate webhooks, money \
+reservation without finalization, provider timeouts, unicode/locale, \
+concurrency on shared rows, auth boundary bypasses. Name the file:line \
+where each is missing. \
+(C) OVER-ENGINEERING — call out speculative abstractions, unused \
+parameters, premature generics, dead branches, feature flags with one \
+branch, helpers with one caller, and any code whose removal would not \
+change behavior. \
+Also cover: correctness bugs, security issues, money/state cleanup, \
+provider correlation, SSOT violations, stubs masquerading as real wiring. \
+Be adversarial." \
+  -C "$(pwd)" -s read-only -c 'model_reasoning_effort="high"' \
+  --enable web_search_cached --json 2>/dev/null \
+| tee .context/codex-final-review.jsonl \
+| python3 -c "import sys,json
+for line in sys.stdin:
+  try: o=json.loads(line)
+  except: continue
+  t=o.get('type','')
+  if t in ('item.completed','agent_message'):
+    m=o.get('item',{}).get('text') or o.get('message','')
+    if m: print(m)
+"
+```
+
+### 12. Validate + fix real findings (parallel validation, serial fixes) — **skip if `CODEX_OK=no`**
+
+1. Fan out validation with `superpowers:dispatching-parallel-agents` — one sub-agent per finding, returning `{valid, evidence: file:line, fix_approach}`.
+2. **Fixes are serial** (clean commit history, avoid merge conflicts). For each valid finding /go runs the mini-harness: Developer writes failing test first + fix, Verifier runs gates, Auditor confirms resolution. Commit per finding: `fix($TASK_SLUG): <finding>`.
+3. Invalid findings → "Rejected final-audit findings" section in the plan with one-line reasoning.
+4. If any code changed, re-run the discovered verification gate before declaring done.
+
+### 13. Done
+
+Print a concise summary:
+- worktree path + branch name
+- plan path
+- sprint count with pass/fail per sprint
+- Codex findings accepted/rejected in both rounds
+- final verification-gate status
+- next step for the user (e.g., `/ship` or open a PR from inside the worktree)
+
+**Do not push or open a PR yourself.** The user owns the merge decision.
+
+## Stop conditions (ask the user; don't guess)
+
+- Task description is unclear or too broad → ask ONE clarifying question, then resume.
+- Project discovery yielded no verification gate → ask the user for the command.
+- Sprint loop fails 3× on the same acceptance criterion → stop and surface the root cause.
+- Verification gate fails with a pre-existing (non-yours) breakage → stop and surface it; do not silently fix unrelated code.
+- Codex returns >10 findings in either round → summarize and ask which to prioritize before mass-patching.
+
+## Failure mode notes
+
+- If `codex exec resume` fails (session expired), start a fresh Codex call but re-feed the plan path and the diff summary so it has equivalent context.
+- If the worktree already exists, reuse it only if the branch name matches exactly AND `git status` is clean; otherwise pick a numbered suffix (`$TASK_SLUG-2`).
+- If the project's toolchain isn't installed in the worktree, bootstrap it once (`pnpm install --frozen-lockfile`, `uv sync`, `cargo fetch`, `go mod download`) before the first Developer spawn.
