@@ -54,15 +54,28 @@ Record discoveries to `.context/go-env.json` for reuse across phases.
 
 ### Codex readiness probe (do this during discovery)
 
+Goal: decide whether Codex is usable, without false-negative-ing on a cold start. A cold Codex (auth refresh + model warm-up) routinely needs 30–60s before the first streaming event. Do NOT fail the probe just because the first HTTP call is slow. The rule: **Codex is alive as soon as a `thread.started` event appears in the JSON stream.** If nothing arrives within the probe timeout, treat it as unavailable.
+
 ```bash
 CODEX_OK=no
-if command -v codex >/dev/null 2>&1; then
-  # Smoke check: 10s timeout, list sessions or print version — anything that
-  # proves the binary is usable and authenticated.
-  if timeout 10 codex --version >/dev/null 2>&1 && \
-     timeout 10 codex exec "ping" -s read-only --json >/dev/null 2>&1; then
-    CODEX_OK=yes
-  fi
+if command -v codex >/dev/null 2>&1 && timeout 15 codex --version >/dev/null 2>&1; then
+  # Probe: up to 120s wall-clock. Declare alive as soon as thread.started
+  # is seen on stdout — don't wait for the full reply.
+  PROBE_OUT=$(mktemp)
+  ( timeout 120 codex exec "ping" -s read-only --json 2>/dev/null \
+      | tee "$PROBE_OUT" >/dev/null ) &
+  PROBE_PID=$!
+  for _ in $(seq 1 24); do  # ~120s, checking every 5s
+    if grep -q '"type":"thread.started"' "$PROBE_OUT" 2>/dev/null; then
+      CODEX_OK=yes
+      break
+    fi
+    kill -0 "$PROBE_PID" 2>/dev/null || break
+    sleep 5
+  done
+  # Whether alive or dead, reap the probe.
+  kill "$PROBE_PID" 2>/dev/null; wait "$PROBE_PID" 2>/dev/null
+  rm -f "$PROBE_OUT"
 fi
 echo "CODEX_OK=$CODEX_OK" >> .context/go-env.env
 ```
@@ -73,9 +86,40 @@ If `CODEX_OK=no`:
 - In phase 13's summary, note `codex: unavailable — plan and final reviews skipped` so the user knows what didn't run.
 - Do **not** fail the pipeline because Codex is missing. Codex is a second-opinion accelerant, not a gate.
 
+## Input contract — what /go expects and what it produces
+
+**Input (one of):**
+- a task description in the message (e.g., "/go add X");
+- an upstream PM/brief/story document (path passed in the message, or most recent file under `~/.claude/plans/` if the user points there);
+- a list of user stories with acceptance criteria.
+
+Whatever form the input takes, treat it as **stories + intent** — not as a detailed engineering plan. The PM spec answers *what the user wants*; /go is responsible for answering *how we build and verify it*.
+
+**Output:** a detailed engineering plan at `<plans-dir>/YYYY-MM-DD-<slug>.md` authored by `superpowers:writing-plans`, hardened by `plan-review` and Codex, then executed under the harness.
+
+**Hard rule:** Phase 2 always invokes `superpowers:writing-plans`. Do NOT skip writing-plans in favor of `cp`-ing an upstream plan into `docs/plans/`, even when the upstream plan looks complete. When an upstream doc exists, pass its path as input context to writing-plans (e.g., "draft a detailed engineering plan for the user stories in `<path>`") so writing-plans can derive engineering scope, guardrails, edge cases, and files-to-modify from it. The resulting plan file is what phase 5 commits and what phases 6–12 review, audit, and implement against.
+
 ## Execution sequence
 
-Use `TaskCreate` up front to materialize the thirteen phases so the user can watch progress. Mark each completed as you go.
+Use `TaskCreate` up front to materialize **all thirteen phases as separate todos** so the user can watch progress. Mark each completed as you go.
+
+**Anti-bundling rule:** Phases 2, 3, 4, and 5 are four distinct todos and four distinct commits. Never merge them — especially not when an upstream PM plan exists. `plan-review` (phase 4) pauses for `AskUserQuestion` and must be visible in the task list so the user can see it ran; if it is bundled into an adjacent todo it gets skipped silently. `writing-plans` (phase 2) must be visible for the same reason — a task labeled "Copy plan" signals that the skill skipped its own authoring step.
+
+The thirteen TaskCreate items (use these labels verbatim — do not invent shorter or combined labels):
+
+1. Phase 1 — Setup worktree + project discovery + Codex readiness probe
+2. Phase 2 — writing-plans skill pass (detailed engineering plan)
+3. Phase 3 — Append Harness Protocol section
+4. Phase 4 — plan-review skill pass (auto-accept recommended options)
+5. Phase 5 — Commit the plan
+6. Phase 6 — Codex plan review (skip if unavailable)
+7. Phase 7 — Validate + apply Codex plan findings (skip if unavailable)
+8. Phase 8 — Execute sprints under harness protocol
+9. Phase 9 — Simplify pass
+10. Phase 10 — Clean tree + shipping gate
+11. Phase 11 — Final Codex audit (skip if unavailable)
+12. Phase 12 — Validate + fix final-audit findings (skip if unavailable)
+13. Phase 13 — Done — print summary
 
 ### 1. Setup worktree
 
@@ -91,9 +135,14 @@ mkdir -p .context
 
 All file edits below happen inside `$WT`. Every shell command either uses an absolute path or is prefixed with `cd "$WT" && …`.
 
-### 2. Write the plan
+### 2. Write the plan (always via writing-plans — never by copying)
 
-Invoke `Skill` → `superpowers:writing-plans` with the task as input. The plan must cover: scope, acceptance criteria, guardrails, edge cases, files to modify.
+Invoke `Skill` → `superpowers:writing-plans`. Input to writing-plans:
+
+- If the message contains an upstream PM/brief/story doc path, pass that path plus the user's task description as context — writing-plans reads it and derives the engineering plan from it. Do NOT `cp` the upstream doc into `<plans-dir>/` as a substitute for running writing-plans.
+- If no upstream doc exists, pass just the task description.
+
+The output engineering plan must cover: scope, acceptance criteria (each tied back to a user story if stories exist), guardrails, edge cases, and files to modify. Write the plan to `<plans-dir>/YYYY-MM-DD-<slug>.md`. Phases 3–5 mutate and commit this same file.
 
 ### 3. Add Harness Protocol section
 
@@ -112,6 +161,17 @@ git commit -m "docs(plans): $TASK_SLUG — initial plan"
 ```
 
 ### 6. Codex plan review (capture session id for reuse) — **skip if `CODEX_OK=no`**
+
+**Execution mechanics (important — prevents premature "Codex unavailable"):**
+
+- Run the Codex call below via Bash with `run_in_background: true`. The Bash tool's default 120s timeout will kill a legitimate Codex review on a real plan — do not use the foreground Bash path for this step.
+- Simultaneously, poll `.context/codex-plan-review.jsonl` every 30s for either:
+  - a new `item.completed` or `agent_message` event (Codex is producing output — keep waiting), or
+  - a `thread.completed` / process-exit (Codex is done — move on).
+- If no new JSON event appears for **three consecutive polls (90s of silence)** and the process has not exited, treat it as hung: kill the background job, mark Codex unavailable for this phase only, and proceed to phase 8. Record the skip reason in the plan's "Rejected Codex findings" section.
+- If you ever need a single foreground fallback, pass `timeout: 600000` (10 min) to the Bash tool.
+
+Same rule applies to phase 11.
 
 ```bash
 TMPERR=$(mktemp)
@@ -169,6 +229,8 @@ git status --porcelain           # must be empty
 If either fails, loop back to the failing sprint. Do not proceed.
 
 ### 11. Final Codex audit — same thread, three labeled buckets — **skip if `CODEX_OK=no`**
+
+Run this call with the same background + 90s-silence watchdog described in phase 6. Do not invoke it in the foreground Bash path.
 
 ```bash
 SID=$(cat .context/codex-session-id)
