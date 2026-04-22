@@ -46,7 +46,7 @@ See `docs/skill-relations.md` for the full dependency diagram.
 ## Conventions
 
 - **Naming:** kebab-case for all skill names
-- **Description format:** `>` multiline YAML string with trigger phrases at the end
+- **Description format:** `>` multiline YAML string, **triggers-first** — start with "Use when…". Description is a dispatch router, not documentation: never list procedural steps, phase names, framework formulas, or implementation internals (those live in the SKILL.md body). Allowed tail: a short principle, a disambiguation ("distinct from X"), or the immediate output — see obra/superpowers skills for canonical examples.
 - **Sub-skill invocation:** "Invoke the `<skill-name>` skill for [what it provides]"
 - **Domain overrides:** Clearly labeled ("Quality-Optimized Override") with explanation of how they differ from defaults
 - **References:** Put large reference material in `references/` subdirectory, not in SKILL.md

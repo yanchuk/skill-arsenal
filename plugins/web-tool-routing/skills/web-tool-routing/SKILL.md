@@ -1,15 +1,12 @@
 ---
 name: web-tool-routing
 description: >
-  Web tool routing, detection, and fallback chains for any skill or agent that
-  accesses websites. Provides credit-aware tool selection — chooses the
-  cheapest working tool first, escalates only on failure. Use this skill
-  when building or running any research workflow that reads web pages or
-  searches the web. Skills invoke this directly; agents (which can't load
-  skills at runtime) reference this as the canonical source and carry
-  quality-optimized overrides inline. Other skills (competitor-research,
-  researching-consumer-goods) invoke this for shared routing logic and add
-  their own domain-specific overrides.
+  Use when building or running any workflow that reads web pages or searches
+  the web and needs to pick a tool. Invoked by web-research, competitor-research,
+  and researching-consumer-goods as shared routing infrastructure; agents that
+  can't load skills at runtime reference it as the canonical source. Trigger
+  phrases: "which scraper", "fetch this URL", "route the web call", "pick a
+  web tool", "credit-aware fetch".
 ---
 
 # Web Tool Routing

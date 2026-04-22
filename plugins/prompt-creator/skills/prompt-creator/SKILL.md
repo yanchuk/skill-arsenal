@@ -1,13 +1,12 @@
 ---
 name: prompt-creator
 description: >
-  Create effective prompts using proven engineering techniques from
-  Anthropic and OpenAI documentation. Use when crafting prompts for
-  Claude, ChatGPT, Gemini, or any LLM — system prompts, agent instructions,
-  research prompts, or external AI handoff prompts. Also use when other
-  skills need to generate "deep research prompts" (Path B external AI
-  pattern). Trigger phrases: "create a prompt", "write a prompt for",
-  "generate a research prompt", "optimize this prompt", "prompt for ChatGPT".
+  Use when crafting prompts for Claude, ChatGPT, Gemini, or any LLM —
+  system prompts, agent instructions, research prompts, or external AI
+  handoff prompts. Also use when other skills need to generate "deep
+  research prompts" (Path B external AI pattern). Trigger phrases:
+  "create a prompt", "write a prompt for", "generate a research prompt",
+  "optimize this prompt", "prompt for ChatGPT".
 ---
 
 # Prompt Creator

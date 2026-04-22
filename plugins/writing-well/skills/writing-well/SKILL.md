@@ -5,8 +5,7 @@ description: >
   website copy, marketing text, documentation, reports, blog posts,
   social media, memos, announcements. Also use when the user asks
   to improve, rewrite, edit, or polish any written content, or when
-  generating copy from scratch. Applies Zinsser's nonfiction writing
-  principles: simplicity, clarity, active voice, clutter elimination.
+  generating copy from scratch.
 ---
 
 # Writing Well

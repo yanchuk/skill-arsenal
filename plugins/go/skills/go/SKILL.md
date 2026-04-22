@@ -1,13 +1,11 @@
 ---
 name: go
 description: >
-  End-to-end feature pipeline — plan → harness protocol → plan-review →
-  Codex plan audit → execute with strict harness → simplify → final Codex
-  audit (E2E gaps, edge cases, over-engineering). Runs inside an isolated
-  git worktree. Project-agnostic — discovers the project's verification
-  commands at runtime. Use when the user says `/go`, "go", "full pipeline",
-  "do the whole thing", or is ready to hand off a complete product-level
-  task for autonomous execution.
+  Use when the user types `/go`, `/go <task>`, or says "go", "full pipeline",
+  "do the whole thing", "ship this end to end", "run the full flow", or is
+  ready to hand off a complete product-level task for autonomous execution.
+  Runs an autonomous multi-phase pipeline inside an isolated worktree —
+  phases defined in the skill body. Project-agnostic.
 ---
 
 # /go — full-lifecycle feature pipeline

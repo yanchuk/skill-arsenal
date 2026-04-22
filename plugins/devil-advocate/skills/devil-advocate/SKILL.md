@@ -1,14 +1,11 @@
 ---
 name: devil-advocate
 description: >
-  Adversarial independent reviewer — spawns a fresh-context sub-agent to
-  attack a plan, PR, design, or RFC. Enforces attack-first stance, severity
-  rubric (blocker / major / minor), concrete-edit requirement, and the
-  anti-fabrication rule ("if X is fine, say so"). Distinct from plan-review
-  which surveys. Use when the user types /devil-advocate, /devils-advocate,
-  says "play devil's advocate", "attack this plan", "adversarial review",
-  "find holes in", or before any high-blast-radius change (money, auth,
-  security, migrations, >5 files).
+  Use when the user types /devil-advocate, /devils-advocate, says "play
+  devil's advocate", "attack this plan", "adversarial review", "find holes
+  in", "red-team this", or before any high-blast-radius change (money, auth,
+  security, migrations, >5 files). Distinct from plan-review (which surveys,
+  not attacks).
 ---
 
 # /devil-advocate — adversarial independent reviewer

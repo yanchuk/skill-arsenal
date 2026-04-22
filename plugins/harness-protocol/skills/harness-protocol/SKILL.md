@@ -1,11 +1,11 @@
 ---
 name: harness-protocol
 description: >
-  Orchestrator → Developer → Verifier → Auditor harness for any multi-sprint
-  or multi-file task. The generator never evaluates itself. Hard >9/10 per-
-  criterion threshold. Use when coordinating a sprinted implementation across
-  sub-agents and you need quality gates that can't be talked out of.
-  Project-agnostic — detects the project's verification commands at runtime.
+  Use when coordinating a sprinted implementation across sub-agents and you
+  need quality gates that can't be talked out of — task spans multiple
+  sprints, waves, or >5 files. Trigger phrases: "run the harness", "use
+  the protocol", "quality-gated build", "sprinted implementation", "hard
+  quality gate". Project-agnostic.
 ---
 
 # Harness-Orchestrated Development
