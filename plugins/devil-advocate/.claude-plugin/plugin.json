@@ -1,0 +1,11 @@
+{
+  "name": "devil-advocate",
+  "description": "Adversarial independent reviewer — spawns a fresh-context sub-agent to attack a plan, PR, design, or RFC. Enforces attack-first stance, severity rubric (blocker / major / minor), concrete-edit requirement, anti-fabrication rule. Distinct from plan-review (which surveys). Use before high-blast-radius changes or when a plan 'feels fine but is important.'",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["devil-advocate", "adversarial-review", "independent-review", "plan-review", "risk-assessment"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}

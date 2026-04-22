@@ -33,6 +33,8 @@ Curated collection of Claude Code skills — research, writing, and more.
 |-------|-------------|
 | **harness-protocol** | Orchestrator → Developer → Verifier → Auditor pattern for multi-sprint / multi-file work. Generator never self-evaluates. Hard >9/10 per-criterion threshold. Project-agnostic — discovers the project's verification commands at runtime. |
 | **go** | End-to-end feature pipeline: plan → harness protocol → `plan-review` → Codex plan audit → execute with strict harness → `simplify` → final Codex audit (E2E gaps / edge cases / over-engineering). Runs inside an isolated git worktree. Codex is optional — skipped cleanly when the CLI isn't available. Project-agnostic. |
+| **retrospective** | Structured project retrospective — mines the last N days of Claude Code sessions, audits git + plans, cross-checks epistemic layers (blognot 3-layer model), spawns `devil-advocate` on the draft, and emits a dated retro plan. Project-agnostic — walks up from `$PWD` to find the project root. |
+| **devil-advocate** | Adversarial independent reviewer. Spawns a fresh-context sub-agent to attack a plan, PR, or design doc. Enforces severity rubric (blocker/major/minor), concrete-edit requirement, and the "if X is fine, say so" anti-fabrication rule. Distinct from `plan-review` (which surveys). Use before high-blast-radius changes. |
 
 ## How it works
 

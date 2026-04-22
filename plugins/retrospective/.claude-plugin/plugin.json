@@ -1,0 +1,11 @@
+{
+  "name": "retrospective",
+  "description": "Structured project retrospective — mines sessions, audits git + plans, cross-checks epistemic layers, spawns devil-advocate, emits a dated retro plan. Project-agnostic — walks up from $PWD to discover the project root. Use when the user says /retrospective, retro, or asks for a look-back on the last N days.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["retrospective", "retro", "audit", "session-mining", "devil-advocate", "orchestration"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}
