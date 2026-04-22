@@ -1,7 +1,6 @@
 ---
 name: researching-consumer-goods
 description: >
-  Researches consumer products for purchase across global markets.
   Use when comparing prices across retailers, checking size or variant
   availability, finding deals and discounts, or researching any consumer
   goods — electronics, outdoor gear, footwear, clothing, furniture,

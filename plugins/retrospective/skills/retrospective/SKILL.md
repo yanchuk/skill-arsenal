@@ -1,14 +1,10 @@
 ---
 name: retrospective
 description: >
-  Structured project retrospective — mines the last N days of Claude Code
-  sessions, audits git + plans, cross-checks epistemic layers, spawns an
-  independent devil's advocate, and emits a dated retro plan into the
-  project's docs/retro/. Project-agnostic — walks up from $PWD to find
-  the project root (first dir containing .claude/rules/ or CLAUDE.md).
   Use when the user types /retrospective, /retro, or says "do a retro",
   "weekly retrospective", "look back on last N days", "what went wrong
-  this week".
+  this week", "project retro", "sprint retrospective". Emits a dated
+  retro plan into docs/retro/. Project-agnostic.
 ---
 
 # /retrospective — structured project retrospective

@@ -1,12 +1,11 @@
 ---
 name: web-research
 description: >
-  Web research methodology with wave-based execution, creative query
-  strategies, and structured output. Use when researching any topic online —
-  debugging issues, finding solutions, gathering information from multiple
-  sources. Trigger phrases: "research this", "find information about",
-  "what's the latest on", "search the web for", "look up", "investigate",
-  "detailed research on", "in-depth investigation", "deep dive into".
+  Use when researching any topic online — debugging issues, finding
+  solutions, gathering information from multiple sources. Trigger phrases:
+  "research this", "find information about", "what's the latest on",
+  "search the web for", "look up", "investigate", "detailed research on",
+  "in-depth investigation", "deep dive into".
 ---
 
 # Web Research

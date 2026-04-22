@@ -1,13 +1,11 @@
 ---
 name: competitor-research
 description: >
-  Research competitors by gathering and analyzing community feedback from
-  Reddit, forums, and review sites. Use this skill whenever the user asks
-  to research a competitor, gather community feedback about a product,
-  analyze Reddit discussions, do competitive intelligence, or says things
-  like "research [product]", "what do people say about X", "gather reddit
-  feedback for", "analyze competitor", or "community sentiment about".
-  Also use when the user provides a list of Reddit URLs to analyze.
+  Use when the user asks to research a competitor, gather community feedback
+  about a product, analyze Reddit discussions, or do competitive intelligence.
+  Trigger phrases: "research [product]", "what do people say about X",
+  "gather reddit feedback for", "analyze competitor", "community sentiment
+  about". Also use when the user provides a list of Reddit URLs to analyze.
 ---
 
 # Competitor Research

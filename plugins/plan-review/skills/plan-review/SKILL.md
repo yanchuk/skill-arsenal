@@ -1,12 +1,12 @@
 ---
 name: plan-review
 description: >
-  Reviews implementation plans, PRs, and code changes with structured
-  technical analysis across five dimensions: architecture, code quality,
-  testing, performance, and risk. Use when reviewing a plan, PR, diff,
-  or proposed code change. Also use when asked to critique, assess, or
-  evaluate any technical proposal or implementation approach. Presents
-  numbered issues with ranked options and pauses for user decisions.
+  Use when reviewing a plan, PR, diff, or proposed code change, or when
+  asked to critique, assess, or evaluate any technical proposal or
+  implementation approach. Surveys issues and presents ranked options
+  for user decisions. Distinct from devil-advocate (which attacks rather
+  than surveys). Trigger phrases: "review this plan", "review the PR",
+  "critique this", "evaluate this approach", "assess this design".
 ---
 
 # Plan Review

@@ -1,13 +1,10 @@
 ---
 name: prompt-74
 description: >
-  High-stakes prompt engineering methodology for real-world decisions
-  and deep research. Generates structured, evidence-driven prompts using
-  the PROMPT-74 framework: Role + Constraints + Source of Truth →
-  Evidence-driven analysis → Actionable deliverable. Use when the user
-  needs a thorough, professional-grade prompt for complex decisions,
-  deep research, strategy analysis, or any task requiring expert-level
-  output with verification. Trigger phrases: "prompt74 this",
+  Use when the user needs a thorough, professional-grade prompt for
+  complex decisions, deep research, strategy analysis, or any task
+  requiring expert-level output with verification. Emits a prompt in
+  the PROMPT-74 framework. Trigger phrases: "prompt74 this",
   "prompt74 deep research for", "high-stakes prompt", "generate a
   decision prompt", "ownership prompt".
 ---
