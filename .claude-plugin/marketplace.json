@@ -77,6 +77,20 @@
       "version": "1.0.0",
       "source": "./plugins/go",
       "strict": true
+    },
+    {
+      "name": "devil-advocate",
+      "description": "Adversarial independent reviewer — spawns a fresh-context sub-agent to attack a plan, PR, design, or RFC. Severity rubric, concrete-edit requirement, anti-fabrication rule. Distinct from plan-review (which surveys).",
+      "version": "1.0.0",
+      "source": "./plugins/devil-advocate",
+      "strict": true
+    },
+    {
+      "name": "retrospective",
+      "description": "Structured project retrospective — mines sessions, audits git + plans, cross-checks epistemic layers, spawns devil-advocate, emits a dated retro plan. Project-agnostic — walks up from $PWD to find the project root.",
+      "version": "1.0.0",
+      "source": "./plugins/retrospective",
+      "strict": true
     }
   ]
 }
