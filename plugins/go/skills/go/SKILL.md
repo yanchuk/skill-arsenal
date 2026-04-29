@@ -99,11 +99,11 @@ Whatever form the input takes, treat it as **stories + intent** — not as a det
 
 ## Execution sequence
 
-Use `TaskCreate` up front to materialize **all thirteen phases as separate todos** so the user can watch progress. Mark each completed as you go.
+Use `TaskCreate` up front to materialize **all fourteen phases as separate todos** so the user can watch progress. Mark each completed as you go.
 
 **Anti-bundling rule:** Phases 2, 3, 4, and 5 are four distinct todos and four distinct commits. Never merge them — especially not when an upstream PM plan exists. `plan-review` (phase 4) pauses for `AskUserQuestion` and must be visible in the task list so the user can see it ran; if it is bundled into an adjacent todo it gets skipped silently. `writing-plans` (phase 2) must be visible for the same reason — a task labeled "Copy plan" signals that the skill skipped its own authoring step.
 
-The thirteen TaskCreate items (use these labels verbatim — do not invent shorter or combined labels):
+The fourteen TaskCreate items (use these labels verbatim — do not invent shorter or combined labels):
 
 1. Phase 1 — Setup worktree + project discovery + Codex readiness probe
 2. Phase 2 — writing-plans skill pass (detailed engineering plan)
@@ -117,7 +117,8 @@ The thirteen TaskCreate items (use these labels verbatim — do not invent short
 10. Phase 10 — Clean tree + shipping gate
 11. Phase 11 — Final Codex audit (skip if unavailable)
 12. Phase 12 — Validate + fix final-audit findings (skip if unavailable)
-13. Phase 13 — Done — print summary
+13. Phase 13 — Promote open findings to monthly ledger (skip if no project ledger directory)
+14. Phase 14 — Done — print summary
 
 ### 1. Setup worktree
 
@@ -274,13 +275,66 @@ for line in sys.stdin:
 3. Invalid findings → "Rejected final-audit findings" section in the plan with one-line reasoning.
 4. If any code changed, re-run the discovered verification gate before declaring done.
 
-### 13. Done
+### 13. Promote open findings to monthly ledger
+
+If the project has a directory at `docs/retro/codex-findings/`, append
+every entry from the plan file's "Rejected final-audit findings" section
+whose status is `open` or `deferred` to
+`docs/retro/codex-findings/<YYYY-MM>.md` under the `## open` heading.
+
+This is the across-runs memory; without this step the ledger stays
+empty and `context-continuity.md`-style "check open findings before
+declaring done" rules become no-ops (the gap that triggered phoneapp's
+2026-04-26 retro Finding 1).
+
+```bash
+LEDGER_DIR=docs/retro/codex-findings
+if [ -d "$LEDGER_DIR" ]; then
+  MONTH=$(date +%Y-%m)
+  LEDGER="$LEDGER_DIR/$MONTH.md"
+  # Create the file if missing, with the schema-compliant header.
+  if [ ! -f "$LEDGER" ]; then
+    cat > "$LEDGER" << EOF
+# Codex findings — $MONTH
+
+## open
+
+## closed (current month)
+EOF
+  fi
+  # Extract entries from the plan's Rejected final-audit findings section
+  # whose status remains open or deferred, and append to the ledger's
+  # "## open" section. Each entry must include caught_by: and provenance:.
+  # Implementation: read the plan section programmatically, format per
+  # docs/retro/README.md schema, then commit.
+  git add "$LEDGER"
+  git commit -m "docs(retro): promote $TASK_SLUG open findings to ledger"
+fi
+```
+
+Each promoted entry must include:
+- `[status]` — `blocker` / `major` / `minor`
+- `finding-id` — short kebab-case slug
+- File path
+- `opened YYYY-MM-DD on plan/<plan-file>`
+- `caught_by:` — `codex` (default for /go's Codex passes), or
+  `auditor` / `devil-advocate` / `second-pass` if the plan file
+  attributes differently
+- `provenance: extracted` (the entry was lifted from a structured
+  Rejected-findings section)
+
+If no `docs/retro/codex-findings/` directory exists in the project,
+skip this phase (it's a phoneapp-style ledger convention; not every
+project has one).
+
+### 14. Done
 
 Print a concise summary:
 - worktree path + branch name
 - plan path
 - sprint count with pass/fail per sprint
 - Codex findings accepted/rejected in both rounds
+- count of findings promoted to the monthly ledger (phase 13)
 - final verification-gate status
 - next step for the user (e.g., `/ship` or open a PR from inside the worktree)
 
