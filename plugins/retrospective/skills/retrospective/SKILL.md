@@ -141,6 +141,34 @@ as the template):
 
 Write to `.context/retro-draft.md` for the next step.
 
+## Step 4.5: Proportionality pass (calibrate against adoption)
+
+`/devil-advocate` (the next step) sharpens findings — it does not size them.
+A retro that proposes 12 process additions is not better than one that
+proposes 3 *that the team will actually adopt and enforce*. Adversarial
+pressure without proportionality calibration produces rule-bloat: rules
+that read well on the day they're written and silently get skipped a
+week later.
+
+For each item in the draft's **"Recommended setup changes"** section, score on two axes:
+
+- **Adoption likelihood (0–3)** — given the project's recent track record, will this rule survive 30 days? Evidence: how many existing rules in `.claude/rules/` were violated in the lookback window's session mining (already gathered in step 2)? A rule similar in shape to one that was repeatedly violated should score low.
+- **Failure-prevention value (0–3)** — does this rule actually stop the failure mode it targets, or merely document it? Heuristic, strongest first:
+  1. **Tooling-enforced** — hook, CI gate, lint, test (3).
+  2. **Rule-with-trigger** — `paths:` frontmatter, command rule (2).
+  3. **Documentation** — "remember to do X before Y" (1).
+  4. **Convention** — "we should…" (0).
+
+For each recommendation, compute `score = adoption × value`. Apply:
+
+- `score ≥ 6` → keep as-is, promote in the final retro.
+- `3 ≤ score < 6` → keep, but downgrade to the strongest mechanism the project can sustain (e.g., turn a "rule" into a "hook" or drop a multi-step protocol into a single line of CLAUDE.md).
+- `score < 3` → move to a new **"Considered and rejected"** appendix in the draft, with a one-line note explaining the score. The analysis is preserved; the rule isn't shipped.
+
+The output of step 4.5 is the same draft file (`.context/retro-draft.md`) with the Recommended-setup-changes section rewritten and the Considered-and-rejected appendix added. **Step 5 (`/devil-advocate`) then runs against this calibrated draft, not the raw one.**
+
+This step is intentionally not adversarial. Its job is to ask "is this proportionate?" — a question `/devil-advocate` is the wrong tool to answer because adversarial review by construction wants more rules, not fewer.
+
 ## Step 5: Invoke /devil-advocate on the draft
 
 Slash-command invocation (not programmatic Agent call):

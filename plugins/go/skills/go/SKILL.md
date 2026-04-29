@@ -33,6 +33,33 @@ question before starting — after that, execute silently.
 - **Never bypass hooks or test gates** (`--no-verify`, `SKIP_E2E=1`, etc.) unless the user explicitly authorizes it for a docs-only change.
 - When Codex raises a finding, **validate it against the actual code** before acting. Fabricated/stale findings get documented as rejected with reasoning; real ones get fixed in their own commits.
 
+## Model tiering (Opus vs Sonnet inside `/go`)
+
+Sub-agents spawned by `/go` do not all need the same model. Tier by role, not by phase. The hard rule: **the Auditor must never be tiered down**. The harness's >9/10 gate is what protects every sprint downstream; degrading the gate degrades the protocol.
+
+| Sub-agent role | Phases | Model |
+|---|---|---|
+| `superpowers:writing-plans` author | 2 | Opus — wrong-shape plan poisons all downstream phases |
+| `plan-review` reviewer | 4 | Opus — same poison-the-well risk |
+| Codex-finding validator (`Explore`) | 7, 12 | Sonnet — narrow, evidence-based per finding |
+| **Developer** | 8 | **Mixed** — see decision rule below |
+| **Verifier** | 8 | Sonnet — structured PASS/FAIL with evidence; mechanical |
+| **Auditor** | 8, 12-mini | **Opus — non-negotiable.** Long-context skeptical grading is the protocol's quality multiplier |
+| `simplify` pass | 9 | Sonnet |
+| Ledger promotion | 13 | Sonnet (or deterministic shell) |
+
+**Developer decision rule.** Use Opus when the sprint touches:
+
+- Any path the project marks as E2E-mandatory (read `.claude/rules/testing-gates.md`).
+- Any new abstraction, new module, or refactor crossing >5 files.
+- Any money / auth / state-transition / migration change.
+
+Otherwise use Sonnet.
+
+**Spawn instructions.** When spawning sub-agents in phases 7, 8, 9, 12, and 13, pass an explicit `model:` parameter to `Agent()` per the table above. Do not rely on the inherited model — the parent is usually Opus, and inheriting silently defeats the tiering. If `Agent()` does not accept a `model:` field in the runtime you're on, use `subagent_type` to pick an agent variant whose definition pins the right model.
+
+**Why this is safe.** With the Auditor still on Opus, Sonnet errors at the Verifier or Developer level get caught and bounced back as a fix loop. Net effect across a 4-sprint task: roughly one extra fix loop, but each loop is faster + ~3–5× cheaper. Realistic wall-clock improvement: 25–35% end-to-end. The savings disappear if you tier down the Auditor.
+
 ## Project discovery (do this first, cache results)
 
 On startup `/go` discovers project conventions. Detect and remember:
