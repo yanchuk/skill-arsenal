@@ -26,6 +26,7 @@ Curated collection of Claude Code skills — research, writing, and more.
 |-------|-------------|
 | **writing-well** | Applies Zinsser's nonfiction writing principles to any text — emails, docs, marketing copy, blog posts. Simplicity, clarity, no clutter. |
 | **plan-review** | Structured technical review of plans and code changes. Architecture, code quality, testing, performance, risk — interactive issue-by-issue walkthrough. |
+| **tasks-for-sonnet** | Invariant-first task-writing for junior implementation agents (Sonnet, Haiku, or any LLM acting as Developer in a harness loop). Converts vague instructions into mechanically verifiable tasks. Ships a trigger catalog promoted from observed external-reviewer catches: client-trust boundary, schema bounds, state drift, provider reliability, PII. Pairs with `harness-protocol` and `plan-execution`. |
 
 ### Orchestration (coordinate sub-agents end-to-end)
 
@@ -50,6 +51,7 @@ graph TB
     subgraph Standalone["Standalone Skills"]
         WW["writing-well"]
         PR["plan-review"]
+        TFS["tasks-for-sonnet"]
     end
 
     subgraph Domain["Domain Skills"]
@@ -67,6 +69,9 @@ graph TB
     %% Orchestration → other skills
     GO -->|"invokes"| HP
     GO -->|"invokes"| PR
+
+    %% Orchestration → task-shape (Sonnet handoff)
+    HP -.->|"task shape"| TFS
 
     %% Domain → Infrastructure invocations
     WR -->|"invokes"| WTR
@@ -87,6 +92,7 @@ graph TB
     style RCG fill:#50c878,stroke:#2e8b57,color:#fff
     style WW fill:#ffa64d,stroke:#cc7a30,color:#fff
     style PR fill:#ffa64d,stroke:#cc7a30,color:#fff
+    style TFS fill:#ffa64d,stroke:#cc7a30,color:#fff
     style GO fill:#c678dd,stroke:#8e3da8,color:#fff
     style HP fill:#c678dd,stroke:#8e3da8,color:#fff
 ```

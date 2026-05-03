@@ -65,9 +65,9 @@ The **Orchestrator → Generator → Evaluator** pattern. The main conversation 
 ## Per-Sprint Execution Sequence
 
 ### Phase A — Implementation
-1. Orchestrator creates sprint tasks with acceptance criteria
-2. Spawn **Developer agent** with full context (files, plan section, patterns)
-3. Developer implements, writes tests, runs the project's automated gates (see below)
+1. Orchestrator creates sprint tasks with acceptance criteria. **When the implementer is a junior agent (Sonnet, Haiku, etc.), shape every task per the `tasks-for-sonnet` skill** — invariant-first ("What Must Be True"), known constraints with trigger citations from that skill's § 3, and mechanical verification. Implied taste does not survive the handoff.
+2. Spawn **Developer agent** with full context (files, plan section, patterns). For boundary-touching work (server routes, schemas, external provider calls, analytics, file uploads, auth), the Developer's prompt MUST include explicit absolute paths to read `tasks-for-sonnet/SKILL.md` — sub-agents do NOT auto-inherit project rules.
+3. Developer implements, writes tests, runs the project's automated gates (see below).
 
 ### Phase B — Verification
 4. Spawn **Verifier agent** (fresh context, no knowledge of developer's intent)
@@ -78,9 +78,10 @@ The **Orchestrator → Generator → Evaluator** pattern. The main conversation 
 7. Loop until all PASS
 
 ### Phase D — Audit
-8. Spawn **Auditor agent** (completely fresh, skeptical prompt — e.g., `feature-dev:code-reviewer` or `superpowers:code-reviewer`)
-9. Auditor grades each criterion 1-10 with file:line evidence
-10. If any criterion <9/10 → Developer fixes → Auditor re-grades → loop
+8. Spawn **Auditor agent** (completely fresh, skeptical prompt — e.g., `feature-dev:code-reviewer` or `superpowers:code-reviewer`).
+9. Auditor grades each criterion 1-10 with file:line evidence.
+10. **For boundary-touching diffs**, the Auditor MUST also enumerate `triggers_satisfied: [{trigger_id, file, line}]` for every trigger in `tasks-for-sonnet/SKILL.md` § 3 that applies to the diff. Empty enumeration on a boundary diff is an audit failure — either the auditor didn't check or the implementer didn't apply.
+11. If any criterion <9/10 → Developer fixes → Auditor re-grades → loop.
 
 ### Phase E — Sign-off
 11. All gates green, all audit scores >9/10

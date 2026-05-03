@@ -1,0 +1,11 @@
+{
+  "name": "tasks-for-sonnet",
+  "description": "Invariant-first task-writing for junior implementation agents (Sonnet / Haiku / any LLM acting as Developer in a harness loop). Trigger catalog promoted from observed external-reviewer catches. Project-agnostic.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["tasks", "sonnet", "junior-agent", "invariant-first", "harness", "trigger-rules", "acceptance-criteria"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}

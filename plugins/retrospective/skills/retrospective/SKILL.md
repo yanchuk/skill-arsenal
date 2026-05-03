@@ -126,6 +126,23 @@ Check each layer's presence. Output a table in the retro plan:
 | L2 Epistemic rules | ✅/❌ | path |
 | L3 Doc-fetch triggers | ✅/❌ | path |
 
+## Step 3.5: External-reviewer feedback synthesis (Codex / senior review → tasks-for-sonnet)
+
+If the project uses a junior implementation agent (Sonnet, Haiku, etc.) under `harness-protocol` AND any external reviewer (Codex via `/go` or `/codex`, GPT-5, senior human) — every catch where the reviewer found something the in-loop harness missed is a data point for the `tasks-for-sonnet` skill's trigger catalog.
+
+**Required action when both conditions hold:**
+
+1. Locate the project's reviewer-findings ledger. Common shapes:
+   - `docs/retro/codex-findings/<period>.md` (skill-arsenal default)
+   - `audits/<date>.md`, GitHub Issues with a `caught-by-review` label, or any file with `caught_by:` provenance entries.
+2. Group the lookback-period findings where `caught_by: <external-reviewer>` rows exist for the same scope as a prior in-loop pass that returned green. Cluster by failure class (client-trust, schema bounds, state drift, provider reliability, PII, lifecycle refinement, etc.).
+3. For each unique class **without** an existing trigger in `tasks-for-sonnet/SKILL.md` § 3, propose a new trigger rule (`IF <condition> THEN <invariant + verification>`) in the draft retro under "Recommended setup changes". Cite the originating ledger entry inline so lineage is auditable.
+4. For each class **with** an existing trigger that was caught again, propose a *sharpening* — narrow the condition or add a verification step. Do not duplicate.
+
+**Why this step:** without it, the reviewer-findings ledger grows but the junior implementer keeps making the same class of mistake — the harness loop's three roles (Developer / Verifier / Auditor) share the same blind spots. Encoding catches as triggers in `tasks-for-sonnet` is the only mechanism that closes the loop for the **next** sprint.
+
+**If the project doesn't yet have `tasks-for-sonnet` wired:** add an "Adopt tasks-for-sonnet skill" recommendation to the draft retro, citing the catches that motivated it. Skip this step only when no junior agent is in use.
+
 ## Step 4: Draft the retro plan
 
 Produce a plan with these sections (mirror the phoneapp 2026-04-22 retro
@@ -206,6 +223,8 @@ blockers, path to the retro file, and top 3 recommended actions.
 
 ## See also
 
+- `tasks-for-sonnet` — the trigger catalog that consumes findings from Step 3.5. Every retro that closes external-reviewer catches should propose a trigger-rule diff to that skill.
+- `harness-protocol` — the sprint loop whose Auditor must enumerate `triggers_satisfied` from the catalog.
 - `skill-arsenal/plugins/devil-advocate/` — the adversarial reviewer.
 - `skill-arsenal/plugins/go/` — the full pipeline that executes retro recommendations.
 - `skill-arsenal/plugins/plan-review/` — survey-style reviewer (complementary to devil-advocate).
