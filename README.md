@@ -1,8 +1,8 @@
 # skill-arsenal
 
-[![skills.sh](https://skills.sh/b/yanchuk/skill-arsenal)](https://skills.sh/yanchuk/skill-arsenal)
-
 Curated collection of Claude Code skills — research, writing, and more.
+
+**Install:** `npx skills add yanchuk/skill-arsenal` — [full install options ↓](#installation)
 
 ## Skills
 
