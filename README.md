@@ -1,5 +1,7 @@
 # skill-arsenal
 
+[![skills.sh](https://skills.sh/b/yanchuk/skill-arsenal)](https://skills.sh/yanchuk/skill-arsenal)
+
 Curated collection of Claude Code skills — research, writing, and more.
 
 ## Skills
@@ -141,6 +143,12 @@ Here's what that looks like in practice — just say what you need, and the righ
 > Creates a worktree, writes a plan, auto-accepts plan-review recommendations, commits the plan, runs a Codex plan audit (skipped cleanly if Codex isn't installed), executes sprint-by-sprint with fresh Developer/Verifier/Auditor sub-agents per sprint, simplifies, then runs a final Codex audit that must return findings in three labeled buckets (E2E gaps, edge cases, over-engineering). Project-agnostic — detects the project's verification gate from `.claude/rules/`, `package.json`, or `Makefile`.
 
 ## Installation
+
+### skills.sh (recommended)
+
+```bash
+npx skills add yanchuk/skill-arsenal
+```
 
 ### Claude Code (via Plugin Marketplace)
 
