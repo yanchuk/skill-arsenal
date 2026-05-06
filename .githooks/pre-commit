@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Block commits where plugin.json and marketplace.json versions disagree.
+# Enable once per clone: git config core.hooksPath .githooks
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+exec "$repo_root/scripts/check-plugin-versions.sh"

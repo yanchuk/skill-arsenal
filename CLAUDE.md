@@ -49,10 +49,20 @@ Any change to `SKILL.md`, its `references/`, or its frontmatter is a release. Bu
 
 1. Edit `plugins/<name>/.claude-plugin/plugin.json` → bump `version`
 2. Edit `.claude-plugin/marketplace.json` → bump the matching plugin entry's `version` to the same number
-3. Validate: `claude plugin validate .`
+3. Validate: `claude plugin validate . && ./scripts/check-plugin-versions.sh`
 4. Commit with a conventional-commit prefix that matches the bump (`feat:` for minor, `fix:` for patch, `feat!:` / `BREAKING CHANGE:` for major)
 
 If you forgot and already committed, follow up with a version-bump commit before pushing — never let `main` diverge from a stale version.
+
+### Mechanical drift check
+
+`scripts/check-plugin-versions.sh` compares every `plugins/*/.claude-plugin/plugin.json` against its `.claude-plugin/marketplace.json` entry and exits non-zero on any mismatch (version desync, plugin missing from marketplace, or orphan marketplace entry). Run it manually, in CI, or wire it as a pre-commit hook **once per clone**:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+After that, every `git commit` runs `.githooks/pre-commit` → the drift check; commits with desynced versions are blocked.
 
 ## Versioning (SemVer for skills)
 
