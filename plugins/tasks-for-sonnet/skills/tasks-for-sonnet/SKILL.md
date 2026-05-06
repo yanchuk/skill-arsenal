@@ -217,265 +217,27 @@ Junior agents may know platform facts but will not always apply them proactively
 
 ### 3. Known patterns not applied by default
 
-Trigger conditions tell the implementer **when** a pattern is required.
+Trigger conditions tell the implementer **when** a pattern is required. The full IF/THEN rules and stack examples live in `references/trigger-catalog.md`. Read that file when you need to:
 
-#### Universal triggers (apply across stacks)
+- Cite a trigger in a task's *Known Constraints* section for boundary work.
+- Enumerate `triggers_satisfied: [{trigger_id, file, line}]` as Auditor on a sprint diff.
+- Promote a new trigger after an external reviewer catches a class the in-loop harness missed.
 
-```text
-IF any button starts a fetch
-THEN add a pre-state-update in-flight ref guard. `disabled` alone is not enough.
+The catalog has two layers:
 
-IF any image uses onLoad / onError visual state
-THEN add an img.complete mount check. Cached images don't fire onLoad.
+**Universal triggers** — concise patterns that apply almost everywhere (button starts fetch → in-flight ref guard; image onLoad → img.complete mount check; env var read → env.example update with grep count match; numeric env parser → test 0/-1/NaN/partials; AI response → validate before 200; external call → timeout primitive).
 
-IF any env var is read in production-relevant code
-THEN update env.example AND deployment docs. Grep mechanically:
-     `grep -r "process\.env\[" <feature-dir>` count must match env.example count.
+**Trigger catalog** — each entry promoted from a real defect class an external reviewer caught. One-line summaries:
 
-IF any numeric env parser is changed
-THEN test 0, -1, NaN, "abc", "1abc", "1.5". `parseInt` accepts partials silently.
+- **Client-trust boundary** — server assigns; never trust client-supplied `role` / `createdAt` / `sessionToken` / `actorId`. For `modelId` / `mimeType` / `providerHint`, server-side allowlist + byte-level MIME sniff.
+- **Schema bounds** — strings get `trim + min(1) + max(N)` by default; numbers get `integer + non-negative` (or explicit signed bounds with reason). Test rejection of empty / whitespace / oversize / NaN / partials.
+- **State / enum drift** — `status` / `role` / `state` / `kind` / `phase` modelled as typed enum or CHECK constraint at the DB layer, with a single source-of-truth constant array. Insert with unknown literal must fail.
+- **Provider reliability** — external AI / HTTP / RPC calls wrapped in cancellation + explicit timeout, response shape validated, empty / whitespace rejected, telemetry on timeout / empty / shape-mismatch.
+- **PII / privacy** — analytics property names allowlisted in one module; identifiers hashed (SHA-256 + project pepper); raw email / phone / IP / prompts / tokens forbidden.
+- **Partial-vs-final lifecycle** — partial / draft schema paired with full / terminal schema; terminal handler rejects payloads valid against partial but missing required terminal fields.
+- **Live runtime path** — new abstraction / schema / adapter / contract requires at least one test exercising the live production path through the public handler / route / component, failing if the runtime stays on the old path. Includes seven instantiations: end-to-end wiring, old-contract retirement, prompt/schema/renderer lockstep, source-of-truth extraction, spec completeness for input fields, negative-only checks insufficient, live path over unit path.
 
-IF any AI / provider response is returned to client
-THEN validate / normalize it before returning 200. Empty / whitespace / malformed
-     must be rejected with telemetry.
-
-IF any external call can hang
-THEN add timeout (AbortController, ctx.WithTimeout, etc.) or document the
-     platform timeout decision.
-```
-
-#### Trigger catalog — derived from observed external-reviewer catches
-
-These triggers were each promoted from a real catch where an external reviewer (typically Codex) caught something the in-loop harness missed. Each is stack-agnostic; examples illustrate.
-
-Lineage rule: every trigger here was promoted from a reviewer-caught defect class. **Do not delete a trigger** without first showing the underlying class extinct (≥ 2 sprints with zero recurrence) in the project's findings ledger. See § Skill Update Loop.
-
-##### Client-trust boundary
-
-```text
-IF a request schema accepts role / createdAt / id / sessionToken / actorId
-THEN OMIT the field from the request schema entirely; the server assigns it.
-     Allowlisting is INSUFFICIENT — allowlisted role: 'assistant' still permits
-     a forged trusted turn. Allowlisted createdAt still corrupts ordering.
-     Test: send the field with a hostile value; assert the request is rejected
-     OR the field is ignored and the server-assigned value is used.
-
-IF a request schema accepts modelId / mimeType / providerHint / featureFlag
-THEN allowlist server-side from a config / env constant array; reject anything
-     not in the allowlist; never forward the client value to the provider as-is.
-     For mimeType additionally: byte-level MIME sniff (e.g. `file-type`,
-     `python-magic`, `mime-detective`) — the header is untrusted.
-     Test: send a value not in the allowlist; assert 400 + canonical error code.
-```
-
-Stack examples:
-
-- TypeScript / Zod: `z.object({ messages: z.array(...) /* role omitted */ })`
-- Python / Pydantic: define `RequestModel` without `role`; assign in handler.
-- Go: define request struct without the field; assign on the server side.
-- Ruby / ActiveRecord: use `permitted_params` allowlist; never `params.permit!`.
-
-##### Schema bounds
-
-```text
-IF a string field is user-supplied content
-THEN apply trim + min(1) + max(N) by default. Only relax with an explicit
-     comment stating why empty / whitespace / oversize is acceptable.
-     Test: empty, "   " (whitespace-only), and N+1-char inputs each rejected
-     at parse time.
-
-IF a number field is a count / duration / size
-THEN apply integer + non-negative bounds (or explicit signed bounds with
-     a one-line reason for negatives).
-     Test: 0, -1, NaN, 1.5, "abc", "1abc" each rejected at parse time.
-```
-
-Stack examples:
-
-- Zod: `z.string().trim().min(1).max(2000)`, `z.number().int().nonnegative()`
-- Pydantic: `Field(min_length=1, max_length=2000, strip_whitespace=True)`, `conint(ge=0)`
-- Joi: `Joi.string().trim().min(1).max(2000).required()`
-- Rust / `validator`: `#[validate(length(min=1, max=2000))]`
-
-##### State / enum drift (single source of truth)
-
-```text
-IF a column is named status / role / state / kind / phase
-THEN model it as a typed enum or CHECK constraint at the DB layer; never raw
-     untyped string.
-     Cross-check: every code path that sets the column uses a value from a
-     single source-of-truth constant array exported from one module. Stub
-     fixtures import from the same constant.
-     Test: insert with an unknown literal must fail at the DB layer.
-```
-
-Stack examples:
-
-- Postgres + Drizzle / Prisma: `pgEnum('status', [...] as const)`; export the array.
-- Postgres + raw SQL / SQLAlchemy: `CHECK (status IN ('a','b','c'))` + Python `Enum`.
-- MySQL: `ENUM('a','b','c')` column type.
-- Application-only (no DB enum): one TypeScript const + a runtime parser.
-
-##### Provider reliability
-
-```text
-IF a route calls an external AI / HTTP / RPC provider
-THEN wrap in a cancellation primitive with explicit timeout (default 30s);
-     validate the response shape with the provider's schema;
-     reject empty / whitespace-only payloads before returning success;
-     emit a telemetry event on timeout / empty / shape-mismatch.
-     Test: mock a provider that hangs (rejected via cancellation), returns ""
-     (rejected), and returns malformed payload (rejected).
-```
-
-Stack examples:
-
-- Node / fetch: `AbortController` + `AbortSignal.timeout(30_000)`.
-- Python / httpx: `timeout=httpx.Timeout(30.0)` + Pydantic response model.
-- Go: `context.WithTimeout` + struct unmarshal validation.
-- Java / OkHttp: `callTimeout(Duration.ofSeconds(30))`.
-
-##### PII / privacy
-
-```text
-IF an analytics / logging event property is derived from user input
-THEN the property name MUST be in an allowlist module (one source of truth);
-     identifiers MUST be hashed (SHA-256 + project pepper from env), not raw.
-     Forbidden raw: email, phone, IP, free-text answers, prompts, provider
-     tokens, captcha tokens, distinct IDs derived from PII.
-     If the allowlist module does not yet exist, create it as part of the
-     same task — seed with [] and the forbidden-list comment.
-     Test: snapshot test asserting the allowlist contents; unit test that the
-     hash function actually hashes (input ≠ output, deterministic across runs).
-```
-
-Stack examples:
-
-- TypeScript: `lib/analytics/allowed-properties.ts` exporting `as const` array.
-- Python: `analytics/allowed_properties.py` with `Final[frozenset[str]] = frozenset({...})`.
-- Java: enum class `AnalyticsProperty` with allowlist values.
-
-##### Partial-vs-final lifecycle
-
-```text
-IF a schema uses a partial / draft variant for an in-progress lifecycle
-THEN a paired full / refinement schema MUST exist for the terminal boundary
-     (e.g. complete / submit / finalize handler), and the contract MUST be
-     stated in a one-line comment on both schemas.
-     Test: terminal handler rejects payloads valid against the partial schema
-     but missing required terminal fields (e.g. consent: true + email: undefined
-     when consent implies email).
-```
-
-Stack examples:
-
-- Zod: `BaseSchema` and `BaseSchema.partial()` paired with `BaseSchema.refine(...)` on the terminal route.
-- Pydantic: `DraftModel` (all `Optional`) + `FinalModel` extending with `model_validator(mode='after')`.
-
-##### Live runtime path
-
-Junior models routinely ship the new artefact (helper, schema, adapter, contract) and its unit tests, while leaving the live production path on the old wiring. The artefact passes; the runtime never reaches it. The fix is to require at least one test that fails when the runtime is unwired.
-
-```text
-IF a task adds a new abstraction, schema, adapter, helper, or contract
-THEN at least one test MUST exercise the live production path through the
-     public handler / route / component / entry point — not only the new
-     artefact in isolation. The test MUST fail if the runtime still uses
-     the old path or never reaches the new one. Unit tests on the artefact
-     alone are necessary but not sufficient.
-```
-
-This is the meta-rule. The seven instantiations below all share its shape — each was promoted from a class of catch where the artefact was correct but the live path was untouched.
-
-###### End-to-end wiring
-
-```text
-IF a task adds a new helper / utility / abstraction
-THEN add at least one integration or E2E test through the public handler
-     or component that would fail if the helper were unused. Importing the
-     helper directly in tests is fine, but it does not prove the runtime
-     calls it.
-```
-
-###### Old contract retirement
-
-```text
-IF the task replaces contract A with contract B (function rename, schema
-   migration, type swap, endpoint replacement)
-THEN acceptance criteria MUST prove all three:
-     1. B is used by the runtime (positive runtime test).
-     2. A is not used in any active runtime path (static check on old
-        type / function / route / string names — `rg`/grep at minimum).
-     3. Any remaining A usage is explicitly marked legacy or test-only
-        with a one-line comment.
-     Test: a deliberate dead-code injection of A in a runtime path fails
-     CI. Static absence alone is necessary but not sufficient.
-```
-
-###### Prompt / schema / renderer lockstep
-
-```text
-IF an LLM call can return structured tool / UI / action data
-THEN the task MUST update and test in lockstep:
-     - the prompt that lists allowed tool / action names,
-     - the schema that validates them and rejects unknown values,
-     - the renderer / dispatcher that handles every allowed value,
-     - one E2E test that takes a real returned value end-to-end —
-       prompt → schema → renderer → submit / persist.
-     Any of the four out of sync is a defect class, not a polish item.
-```
-
-###### Source-of-truth extraction
-
-```text
-IF the user selects, clicks, or otherwise picks a structured answer
-THEN the application MUST write the stable canonical value to structured
-     state (request body, persisted record, message metadata) before the
-     next model call or downstream consumer runs.
-     Test: inspect the next outbound request body or the persisted record
-     — not the visible chat / UI text. "The model can infer it later" is
-     the failure mode this rule prevents.
-```
-
-###### Spec completeness for input fields
-
-```text
-IF a task says "reduce typing", "provide ready answers", or otherwise
-   adds structured-input affordances to a previously free-text surface
-THEN every target field MUST declare its input kind explicitly:
-     select / multi-select / text / amount / rating / confirm.
-     For select-like fields, tests MUST assert the exact option values
-     exist. "There is a list" is not a spec; the list contents are.
-```
-
-###### Negative-only checks insufficient
-
-```text
-IF a verification step uses `rg` / grep / static analysis to prove old
-   code or old type names are gone
-THEN it MUST be paired with a positive runtime test that fails if the
-     replacement behaviour is absent. Absence-only checks cannot pass a
-     migration task — they prove the old shape is not present, not that
-     the new shape is reached.
-```
-
-###### Live path over unit path
-
-```text
-IF the task's tests import a helper / adapter / utility directly
-THEN add at least one integration or E2E test through the public
-     handler / component / route. The integration test MUST fail if
-     the helper is unreferenced from the live path. Direct imports
-     prove the artefact works in isolation; they do not prove the
-     application uses it.
-```
-
-Stack examples (apply to whole family):
-
-- TypeScript / React: integration test via `@testing-library` rendering the public component; assertion on outbound `fetch` mock body, not on visible text.
-- Python / FastAPI: test client hits the public route; assertion on response shape and on a side-effect (DB row, queue message), not on the helper return value.
-- Go / net/http: `httptest.NewServer` round-trip; assertion on response body and persistent state, with the old handler renamed to a sentinel that fails CI if reached.
-- Rails / Rspec request specs: full request through the controller; assertion on rendered JSON and on a model attribute write, not on a helper-method return.
+For full IF/THEN rules and stack examples (TypeScript / Python / Go / Rails), read `references/trigger-catalog.md`.
 
 ### 4. Non-mechanical completeness
 
@@ -542,16 +304,18 @@ When spawning a sub-agent (Verifier, Auditor, attack-pass) for boundary work, th
 
 ```
 Read these files in order before responding:
-1. <abs-path>/skills/tasks-for-sonnet/SKILL.md (full file, especially § 3)
-2. <project>/.claude/rules/sonnet-handoff.md (if it exists)
-3. <the diff / task / plan under review>
+1. <abs-path>/skills/tasks-for-sonnet/SKILL.md (full file, especially § 3 index)
+2. <abs-path>/skills/tasks-for-sonnet/references/trigger-catalog.md (full IF/THEN
+   rules and stack examples — required for boundary work)
+3. <project>/.claude/rules/sonnet-handoff.md (if it exists)
+4. <the diff / task / plan under review>
 
-For each trigger in § 3 of tasks-for-sonnet that applies to the diff:
-determine whether it is satisfied. Output BLOCKER / MAJOR / MINOR per finding
-with file:line citations. Anti-fabrication: if no trigger applies, say so.
+For each trigger in the trigger catalog that applies to the diff: determine
+whether it is satisfied. Output BLOCKER / MAJOR / MINOR per finding with
+file:line citations. Anti-fabrication: if no trigger applies, say so.
 ```
 
-Resolve absolute paths from `git rev-parse --show-toplevel` for the project root and from the skill cache (typically `~/.claude/plugins/cache/skill-arsenal/`) for the skill — never assume the sub-agent's working directory.
+Resolve absolute paths from `git rev-parse --show-toplevel` for the project root and from the skill cache (typically `~/.claude/plugins/cache/skill-arsenal/`) for the skill — never assume the sub-agent's working directory. The reference file is at `<skill-path>/references/trigger-catalog.md`.
 
 ## Skill Update Loop
 
