@@ -1,23 +1,88 @@
 ---
 name: tasks-for-sonnet
 description: >
-  Use when writing, reviewing, or revising implementation tasks for a junior /
-  implementation agent (Claude Sonnet, Haiku, or any LLM acting as the
-  developer in a harness loop). Converts vague instructions into invariant-first,
-  mechanically verifiable tasks with explicit constraints, TDD steps, and
-  trigger rules derived from observed failure modes. Trigger phrases:
-  "write Sonnet tasks", "implementation handoff", "junior-agent brief",
-  "harness sprint plan", "auditor keeps catching things", "tasks for the
-  developer agent". Project-agnostic.
+  Use BEFORE dispatching any Task / Agent / sub-agent (Sonnet, Haiku,
+  general-purpose, Explore) — consult § Placement Guide to decide whether
+  Sonnet fits the work, § Dispatch Hygiene for the prompt contract, and
+  § Task Template if the sub-agent will execute code. The skill is the
+  orchestrator's manual for using Sonnet as Hands: when to send work, when
+  not to, and how to shape the prompt so Sonnet performs reliably. Also use
+  when writing tasks for a junior implementation agent in a harness loop,
+  when deciding which model for a sub-task, when planning parallel agent
+  work, or when an external reviewer keeps catching things the in-loop
+  harness missed. Trigger phrases: "dispatch sub-agent", "spawn agent",
+  "before sub-agent", "which model", "should I use sonnet", "delegate to
+  sonnet", "parallel agents", "scout swarm", "write Sonnet tasks",
+  "implementation handoff", "junior-agent brief", "harness sprint plan",
+  "auditor keeps catching things", "tasks for the developer agent".
+  Project-agnostic.
 ---
 
 # Tasks For Junior Implementation Agents
 
 **Posture:** Hard gate + co-execution.
 
-Use this skill to write tasks that a junior implementation agent (Claude Sonnet, Haiku, or any LLM acting as Developer in `harness-protocol`) can execute reliably. These models are capable but follow **explicit instructions** better than implied engineering taste. The job is to remove judgment calls from the implementer and convert product/engineering intent into **falsifiable external invariants**.
+Use this skill as the orchestrator's manual for using a junior model (Claude Sonnet, Haiku, or any smaller LLM) as **Hands** — both deciding **whether** to dispatch a sub-agent at all, and **how** to shape the prompt so the work lands reliably. Junior models are capable but follow **explicit instructions** better than implied engineering taste. The job is to remove judgment calls from the implementer and convert product/engineering intent into **falsifiable external invariants**.
 
-This skill is the missing prerequisite to `harness-protocol` and `plan-execution`. Those skills tell you *how* to drive a sprint; this one tells you what a sprint task must contain so the in-loop Verifier and Auditor (also junior models) have a fighting chance against what an external reviewer (Codex, GPT-5, a senior human) routinely catches afterwards.
+This skill is the missing prerequisite to `harness-protocol` and `plan-execution`. Those skills tell you *how* to drive a sprint; this one tells you what a sprint task must contain — and where in your pipeline a junior agent earns its keep at all — so the in-loop Verifier and Auditor (also junior models) have a fighting chance against what an external reviewer (Codex, GPT-5, a senior human) routinely catches afterwards.
+
+## Brain ↔ Hands ↔ Scouts
+
+A useful mental model for any orchestrator picking which model runs which piece of work:
+
+- **Brain** (Opus / GPT-5 / senior human) — encodes judgment, makes architecture decisions, writes the spec in the template this skill defines. The brain owns the *what* and the *why*.
+- **Hands** (Sonnet / Haiku / any junior LLM) — executes against invariants. Reliable when given the template; unreliable when given implied taste. The hands own the *how*, only when the *what* is fully specified.
+- **Scouts** (parallel cheap junior agents) — run BEFORE the brain commits to a plan. Mapping, single-concern review, version fact-checks, multi-file synthesis. Cheap, parallelizable, fresh-context. The scouts enrich the plan; they never write production code.
+
+Read § Placement Guide to decide which role fits the work in front of you. Read § Dispatch Hygiene before pressing the dispatch button. Read § Task Template if the sub-agent will be writing code — but first ask whether it should.
+
+## Placement Guide — where Sonnet earns its keep
+
+Empirically, junior models add the most value as scouts, reviewers, verifiers, and synthesizers — not as writers of application code. Use this section to decide which role fits before you dispatch.
+
+### Use Sonnet for
+
+- **Mapper / scout** — `Explore` agent or equivalent, tight scope (one module / controller / component / package), word cap. Output is `file:line` citations, not raw code dumps. Run BEFORE the brain commits to a plan.
+- **Single-concern reviewer trio** — three reviewers in one parallel dispatch (typical concerns: reuse / quality / efficiency, or correctness / security / performance). Each prompt explicitly tells the agent the other concerns are out of scope. Single message, multiple Task calls.
+- **Verifier with PASS/FAIL** — pinned commit hash or absolute paths, fresh-context opener, verdict required. The verifier does not re-judge severity; it confirms or denies.
+- **Multi-file synthesis** — `session-analyzer` or equivalent for transcripts, sessions, or any "many small inputs → one digest" workload. Junior models excel at structured digestion.
+- **Version / API fact-check** — `WebFetch` + junior model for any version-sensitive or post-cutoff claim. Cheap insurance against training-data drift.
+- **Cross-surface scout** — when work spans repos / packages / surfaces, one scout per surface, parallel, before the Developer agent.
+- **Fully-templated scaffolding** — fixtures, factories, migrations from a complete spec — only with an explicit `carve_out: true` flag in the harness JSON and a one-line rationale. Without that flag, junior-as-Developer is a violation of the standard harness rule (Brain writes; Hands review and verify).
+
+### Don't use Sonnet for
+
+- **Application code requiring judgment** — controllers, models with logic, business rules, anything where the *how* is not fully specified by the *what*. The brain writes. If the task tempts you to write "use X correctly," you don't have a Sonnet task — you have a brain task.
+- **Sub-5-line tasks** — environment fixes, single Bash edits, single file reads. Direct tool call from the parent is faster than a sub-agent dispatch.
+- **Iterating the same artefact >2× per session** — if you find yourself dispatching v2 → v3 → v4 of "apply these new findings," collapse into a single "apply all" pass. Plan-versioning treadmills hide drift.
+- **Single-fact lookups inside the parent's reach** — if `Bash` / `WebFetch` from the parent works, skip the sub-agent overhead.
+- **Dispatch before prerequisites are confirmed** — paths, permissions, branch state, commit hashes. A cancelled scout run is pure cost.
+- **Tasks you'd retry without first reading the previous result** — re-dispatching the same prompt with no new information is a code smell. Read the prior return; revise the prompt; then retry.
+
+### Scout Swarm pattern
+
+For non-trivial tasks (≥3 files, ≥1 boundary touched, or any new module), dispatch a single message of parallel scouts BEFORE the brain commits to the plan. Default pack:
+
+- 1 **Mapper** per module touched — surface area, key call sites, existing utilities to reuse.
+- 1 **Reviewer trio** for the merged plan or the most recent diff — non-overlapping concerns.
+- 1 **Version fact-checker** if the plan has any version-sensitive claim.
+- (Optional) 1 **Cross-surface scout** per repo/package if work spans surfaces.
+- (Optional) 1 **Synthesis scout** if the plan rests on prior session/transcript context.
+
+Output enriches the plan as a "Reconnaissance" section. Scouts never write production code. Skip the swarm for trivial scope (≤5 lines, ≤2 files, single-fact lookup).
+
+## Dispatch Hygiene
+
+Before dispatching any junior sub-agent, verify the prompt meets this contract. These rules were each promoted from observed failure modes; treat them as load-bearing.
+
+- **`model: sonnet` explicit on every dispatch.** `general-purpose` without an explicit `model:` field silently inherits the parent's model (typically Opus) — an invisible 3–5× cost regression with no observable signal in the dispatch. Always set the field; never rely on inheritance.
+- **Word cap stated in the prompt.** Default 600 words; 400 for small directories. Without a cap, junior models pad output and bury the answer.
+- **Fresh-context opener for reviewers and verifiers.** Begin with: *"You do NOT know the parent's intent. Read the diff cold. Find BLOCKERs, not praise."* Without this, junior reviewers tend to rubber-stamp.
+- **Pinned commit hash or absolute file paths for verifiers.** Sub-agents do not auto-inherit the parent's working directory or branch state. State the targets explicitly. Require a PASS/FAIL verdict.
+- **One "apply all" pass over N versioned passes.** If you'd run the same prompt with the next finding queued, fold the findings into a single dispatch. Sequential v2 → v3 → v4 versioning is anti-pattern.
+- **Read the previous result before retrying.** Never re-issue a prompt without reading what the prior dispatch returned. Most retry failures are caused by not noticing the first result already had the answer.
+- **Pre-flight before dispatch.** Confirm permissions, paths, branch, commit hashes BEFORE launching. Cancelled scout runs cost real tokens.
+- **Parallel dispatches in one message.** When concerns are non-overlapping, send all Task calls in a single message — not sequentially. Each prompt explicitly names its concern and tells the agent the others are out of scope.
 
 ## When to invoke
 
@@ -306,6 +371,111 @@ Stack examples:
 
 - Zod: `BaseSchema` and `BaseSchema.partial()` paired with `BaseSchema.refine(...)` on the terminal route.
 - Pydantic: `DraftModel` (all `Optional`) + `FinalModel` extending with `model_validator(mode='after')`.
+
+##### Live runtime path
+
+Junior models routinely ship the new artefact (helper, schema, adapter, contract) and its unit tests, while leaving the live production path on the old wiring. The artefact passes; the runtime never reaches it. The fix is to require at least one test that fails when the runtime is unwired.
+
+```text
+IF a task adds a new abstraction, schema, adapter, helper, or contract
+THEN at least one test MUST exercise the live production path through the
+     public handler / route / component / entry point — not only the new
+     artefact in isolation. The test MUST fail if the runtime still uses
+     the old path or never reaches the new one. Unit tests on the artefact
+     alone are necessary but not sufficient.
+```
+
+This is the meta-rule. The seven instantiations below all share its shape — each was promoted from a class of catch where the artefact was correct but the live path was untouched.
+
+###### End-to-end wiring
+
+```text
+IF a task adds a new helper / utility / abstraction
+THEN add at least one integration or E2E test through the public handler
+     or component that would fail if the helper were unused. Importing the
+     helper directly in tests is fine, but it does not prove the runtime
+     calls it.
+```
+
+###### Old contract retirement
+
+```text
+IF the task replaces contract A with contract B (function rename, schema
+   migration, type swap, endpoint replacement)
+THEN acceptance criteria MUST prove all three:
+     1. B is used by the runtime (positive runtime test).
+     2. A is not used in any active runtime path (static check on old
+        type / function / route / string names — `rg`/grep at minimum).
+     3. Any remaining A usage is explicitly marked legacy or test-only
+        with a one-line comment.
+     Test: a deliberate dead-code injection of A in a runtime path fails
+     CI. Static absence alone is necessary but not sufficient.
+```
+
+###### Prompt / schema / renderer lockstep
+
+```text
+IF an LLM call can return structured tool / UI / action data
+THEN the task MUST update and test in lockstep:
+     - the prompt that lists allowed tool / action names,
+     - the schema that validates them and rejects unknown values,
+     - the renderer / dispatcher that handles every allowed value,
+     - one E2E test that takes a real returned value end-to-end —
+       prompt → schema → renderer → submit / persist.
+     Any of the four out of sync is a defect class, not a polish item.
+```
+
+###### Source-of-truth extraction
+
+```text
+IF the user selects, clicks, or otherwise picks a structured answer
+THEN the application MUST write the stable canonical value to structured
+     state (request body, persisted record, message metadata) before the
+     next model call or downstream consumer runs.
+     Test: inspect the next outbound request body or the persisted record
+     — not the visible chat / UI text. "The model can infer it later" is
+     the failure mode this rule prevents.
+```
+
+###### Spec completeness for input fields
+
+```text
+IF a task says "reduce typing", "provide ready answers", or otherwise
+   adds structured-input affordances to a previously free-text surface
+THEN every target field MUST declare its input kind explicitly:
+     select / multi-select / text / amount / rating / confirm.
+     For select-like fields, tests MUST assert the exact option values
+     exist. "There is a list" is not a spec; the list contents are.
+```
+
+###### Negative-only checks insufficient
+
+```text
+IF a verification step uses `rg` / grep / static analysis to prove old
+   code or old type names are gone
+THEN it MUST be paired with a positive runtime test that fails if the
+     replacement behaviour is absent. Absence-only checks cannot pass a
+     migration task — they prove the old shape is not present, not that
+     the new shape is reached.
+```
+
+###### Live path over unit path
+
+```text
+IF the task's tests import a helper / adapter / utility directly
+THEN add at least one integration or E2E test through the public
+     handler / component / route. The integration test MUST fail if
+     the helper is unreferenced from the live path. Direct imports
+     prove the artefact works in isolation; they do not prove the
+     application uses it.
+```
+
+Stack examples (apply to whole family):
+
+- TypeScript / React: integration test via `@testing-library` rendering the public component; assertion on outbound `fetch` mock body, not on visible text.
+- Python / FastAPI: test client hits the public route; assertion on response shape and on a side-effect (DB row, queue message), not on the helper return value.
+- Go / net/http: `httptest.NewServer` round-trip; assertion on response body and persistent state, with the old handler renamed to a sentinel that fails CI if reached.
+- Rails / Rspec request specs: full request through the controller; assertion on rendered JSON and on a model attribute write, not on a helper-method return.
 
 ### 4. Non-mechanical completeness
 
