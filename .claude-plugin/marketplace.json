@@ -95,7 +95,7 @@
     {
       "name": "tasks-for-sonnet",
       "description": "Invariant-first task-writing for junior implementation agents (Sonnet / Haiku / any LLM acting as Developer). Converts vague instructions into mechanically verifiable tasks; ships a trigger catalog promoted from observed external-reviewer catches (client-trust boundary, schema bounds, state drift, provider reliability, PII). Project-agnostic; pairs with harness-protocol and plan-execution.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "source": "./plugins/tasks-for-sonnet",
       "strict": true
     }
