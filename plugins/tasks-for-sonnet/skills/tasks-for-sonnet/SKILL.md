@@ -71,6 +71,18 @@ For non-trivial tasks (≥3 files, ≥1 boundary touched, or any new module), di
 
 Output enriches the plan as a "Reconnaissance" section. Scouts never write production code. Skip the swarm for trivial scope (≤5 lines, ≤2 files, single-fact lookup).
 
+### Plan-Time Tagging
+
+When an orchestrator (e.g., `/go`) decides Sonnet eligibility once, on the plan, instead of implicitly at dispatch time, use this canonical inline marker so the decision is visible and reviewable:
+
+```markdown
+<!-- sonnet_eligible: true | false — rationale: <one line citing § Placement Guide row> -->
+```
+
+Place the marker on its own line directly under each task header. Plan-review skills should treat any `sonnet_eligible: true` task that touches a § 3 trigger (client-trust, schema bounds, state drift, provider reliability, PII, partial-vs-final, live runtime path) or any money / auth / migration / >5-file scope as a tagging error and recommend `false`. Auditors never override the marker silently — bad markers get re-tagged in a visible commit.
+
+This is the public contract; any orchestrator (not just `/go`) can adopt it. The harness loop reads the marker per task at sprint dispatch time and pairs it with § Dispatch Hygiene to shape the brief.
+
 ## Dispatch Hygiene
 
 Before dispatching any junior sub-agent, verify the prompt meets this contract. These rules were each promoted from observed failure modes; treat them as load-bearing.

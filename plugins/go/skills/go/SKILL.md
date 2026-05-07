@@ -18,6 +18,7 @@ question before starting — after that, execute silently.
 ## Dependencies (other skills invoked)
 
 - `harness-protocol` — required. Loaded from this same arsenal. `/go` is the Orchestrator described there.
+- `tasks-for-sonnet` — required. Loaded from this same arsenal. Owns the Sonnet placement decision (Phase 2.5) and the dispatch contract for every Sonnet sub-agent (phases 7, 8, 12). `/go` never spawns a Sonnet sub-agent without first invoking it.
 - `superpowers:writing-plans`, `superpowers:executing-plans`, `superpowers:test-driven-development`, `superpowers:dispatching-parallel-agents`, `superpowers:subagent-driven-development`.
 - `plan-review` — from this arsenal.
 - `simplify` — any implementation available in the environment (e.g., gstack).
@@ -37,14 +38,18 @@ question before starting — after that, execute silently.
 
 Sub-agents spawned by `/go` do not all need the same model. Tier by role, not by phase. The hard rule: **the Auditor must never be tiered down**. The harness's >9/10 gate is what protects every sprint downstream; degrading the gate degrades the protocol.
 
+`tasks-for-sonnet` is the canonical brief-shaper for every Sonnet sub-agent. The table below picks which role uses Sonnet; `tasks-for-sonnet` § Placement Guide / § Dispatch Hygiene / § Task Template decides whether a *given task* fits that Sonnet role and how the prompt is shaped before the dispatch button is pressed.
+
 | Sub-agent role | Phases | Model |
 |---|---|---|
 | `superpowers:writing-plans` author | 2 | Opus — wrong-shape plan poisons all downstream phases |
+| Sonnet eligibility tagger | 2.5 | Opus — tagging is a judgment call; uses `tasks-for-sonnet` § Placement Guide |
 | `plan-review` reviewer | 4 | Opus — same poison-the-well risk |
-| Codex-finding validator (`Explore`) | 7, 12 | Sonnet — narrow, evidence-based per finding |
-| **Developer** | 8 | **Mixed** — see decision rule below |
-| **Verifier** | 8 | Sonnet — structured PASS/FAIL with evidence; mechanical |
-| **Auditor** | 8, 12-mini | **Opus — non-negotiable.** Long-context skeptical grading is the protocol's quality multiplier |
+| Codex-finding validator (`Explore`) | 7, 12 | Sonnet — narrow, evidence-based per finding; brief shaped via `tasks-for-sonnet` |
+| **Developer** | 8 | **Mixed** — see decision rule below; Sonnet briefs shaped via `tasks-for-sonnet` |
+| **Verifier** | 8 | Sonnet — structured PASS/FAIL with evidence; brief shaped via `tasks-for-sonnet` |
+| **Auditor (verdict + scoring)** | 8, 12-mini | **Opus — non-negotiable.** Long-context skeptical grading is the protocol's quality multiplier |
+| Auditor mechanical sub-scouts | 8 | Sonnet — see Auditor fan-out carve-out below |
 | `simplify` pass | 9 | Sonnet |
 | Ledger promotion | 13 | Sonnet (or deterministic shell) |
 
@@ -54,11 +59,19 @@ Sub-agents spawned by `/go` do not all need the same model. Tier by role, not by
 - Any new abstraction, new module, or refactor crossing >5 files.
 - Any money / auth / state-transition / migration change.
 
-Otherwise use Sonnet.
+Otherwise use Sonnet. The plan's `sonnet_eligible: true|false` markers (set in Phase 2.5 and reviewed in Phase 4) are the per-task source of truth — the rule above is the fallback when no marker exists.
 
-**Spawn instructions.** When spawning sub-agents in phases 7, 8, 9, 12, and 13, pass an explicit `model:` parameter to `Agent()` per the table above. Do not rely on the inherited model — the parent is usually Opus, and inheriting silently defeats the tiering. If `Agent()` does not accept a `model:` field in the runtime you're on, use `subagent_type` to pick an agent variant whose definition pins the right model.
+**Auditor fan-out carve-out.** The Auditor itself runs on Opus (verdict + 0–10 scoring is non-negotiable). However, the Opus Auditor MAY dispatch Sonnet sub-scouts in parallel for purely **mechanical sub-tasks**:
 
-**Why this is safe.** With the Auditor still on Opus, Sonnet errors at the Verifier or Developer level get caught and bounced back as a fix loop. Net effect across a 4-sprint task: roughly one extra fix loop, but each loop is faster + ~3–5× cheaper. Realistic wall-clock improvement: 25–35% end-to-end. The savings disappear if you tier down the Auditor.
+- Enumerating `triggers_satisfied: [{trigger_id, file, line}]` against the diff for every trigger in `tasks-for-sonnet` § 3.
+- Mapping each plan acceptance criterion to its covering test:line.
+- Grepping for completeness counts (env-var reads vs `.env.example` entries, etc.).
+
+When the Auditor fans out, each sub-scout brief MUST follow `tasks-for-sonnet` § Dispatch Hygiene: explicit `model: sonnet`, pinned commit hash, single concern per scout, fresh-context opener, word cap. The Auditor consumes the sub-scouts' outputs into its own report; the Opus Auditor still owns the scoring decision.
+
+**Spawn instructions.** When spawning sub-agents in phases 7, 8, 9, 12, and 13, pass an explicit `model:` parameter to `Agent()` per the table above. Do not rely on the inherited model — the parent is usually Opus, and inheriting silently defeats the tiering. If `Agent()` does not accept a `model:` field in the runtime you're on, use `subagent_type` to pick an agent variant whose definition pins the right model. Before any Sonnet dispatch, invoke `Skill` → `tasks-for-sonnet` first; the skill's § Dispatch Hygiene is what makes Sonnet briefs reliable.
+
+**Why this is safe.** With the Auditor's verdict still on Opus, Sonnet errors at the Verifier or Developer level get caught and bounced back as a fix loop. Auditor fan-out is purely mechanical enumeration — the Opus Auditor reads the sub-scout outputs and assigns the score. Net effect across a 4-sprint task: roughly one extra fix loop, but each loop is faster + ~3–5× cheaper. Realistic wall-clock improvement: 25–35% end-to-end. The savings disappear if you tier down the Auditor's verdict.
 
 ## Project discovery (do this first, cache results)
 
@@ -126,26 +139,27 @@ Whatever form the input takes, treat it as **stories + intent** — not as a det
 
 ## Execution sequence
 
-Use `TaskCreate` up front to materialize **all fourteen phases as separate todos** so the user can watch progress. Mark each completed as you go.
+Use `TaskCreate` up front to materialize **all fifteen phases as separate todos** so the user can watch progress. Mark each completed as you go.
 
-**Anti-bundling rule:** Phases 2, 3, 4, and 5 are four distinct todos and four distinct commits. Never merge them — especially not when an upstream PM plan exists. `plan-review` (phase 4) pauses for `AskUserQuestion` and must be visible in the task list so the user can see it ran; if it is bundled into an adjacent todo it gets skipped silently. `writing-plans` (phase 2) must be visible for the same reason — a task labeled "Copy plan" signals that the skill skipped its own authoring step.
+**Anti-bundling rule:** Phases 2, 2.5, 3, 4, and 5 are five distinct todos and five distinct commits. Never merge them — especially not when an upstream PM plan exists. `plan-review` (phase 4) pauses for `AskUserQuestion` and must be visible in the task list so the user can see it ran; if it is bundled into an adjacent todo it gets skipped silently. `writing-plans` (phase 2) must be visible for the same reason — a task labeled "Copy plan" signals that the skill skipped its own authoring step. Phase 2.5 (Sonnet eligibility tagging) must also stand alone — bundling it into phase 3 hides the tagging decision from `plan-review`'s critique surface.
 
-The fourteen TaskCreate items (use these labels verbatim — do not invent shorter or combined labels):
+The fifteen TaskCreate items (use these labels verbatim — do not invent shorter or combined labels):
 
 1. Phase 1 — Setup worktree + project discovery + Codex readiness probe
 2. Phase 2 — writing-plans skill pass (detailed engineering plan)
-3. Phase 3 — Append Harness Protocol section
-4. Phase 4 — plan-review skill pass (auto-accept recommended options)
-5. Phase 5 — Commit the plan
-6. Phase 6 — Codex plan review (skip if unavailable)
-7. Phase 7 — Validate + apply Codex plan findings (skip if unavailable)
-8. Phase 8 — Execute sprints under harness protocol
-9. Phase 9 — Simplify pass
-10. Phase 10 — Clean tree + shipping gate
-11. Phase 11 — Final Codex audit (skip if unavailable)
-12. Phase 12 — Validate + fix final-audit findings (skip if unavailable)
-13. Phase 13 — Promote open findings to monthly ledger (skip if no project ledger directory)
-14. Phase 14 — Done — print summary
+3. Phase 2.5 — Sonnet eligibility tagging (tasks-for-sonnet § Placement Guide)
+4. Phase 3 — Append Harness Protocol section
+5. Phase 4 — plan-review skill pass (auto-accept recommended options)
+6. Phase 5 — Commit the plan
+7. Phase 6 — Codex plan review (skip if unavailable)
+8. Phase 7 — Validate + apply Codex plan findings (skip if unavailable)
+9. Phase 8 — Execute sprints under harness protocol
+10. Phase 9 — Simplify pass
+11. Phase 10 — Clean tree + shipping gate
+12. Phase 11 — Final Codex audit (skip if unavailable)
+13. Phase 12 — Validate + fix final-audit findings (skip if unavailable)
+14. Phase 13 — Promote open findings to monthly ledger (skip if no project ledger directory)
+15. Phase 14 — Done — print summary
 
 ### 1. Setup worktree
 
@@ -168,7 +182,40 @@ Invoke `Skill` → `superpowers:writing-plans`. Input to writing-plans:
 - If the message contains an upstream PM/brief/story doc path, pass that path plus the user's task description as context — writing-plans reads it and derives the engineering plan from it. Do NOT `cp` the upstream doc into `<plans-dir>/` as a substitute for running writing-plans.
 - If no upstream doc exists, pass just the task description.
 
-The output engineering plan must cover: scope, acceptance criteria (each tied back to a user story if stories exist), guardrails, edge cases, and files to modify. Write the plan to `<plans-dir>/YYYY-MM-DD-<slug>.md`. Phases 3–5 mutate and commit this same file.
+The output engineering plan must cover: scope, acceptance criteria (each tied back to a user story if stories exist), guardrails, edge cases, and files to modify. Write the plan to `<plans-dir>/YYYY-MM-DD-<slug>.md`. Phases 2.5–5 mutate and commit this same file.
+
+### 2.5. Sonnet eligibility tagging
+
+Goal: per-task decisions about *which model implements this* are made once, in the open, on the plan — not implicitly at dispatch time. This is the orchestrator's commitment to using `tasks-for-sonnet` § Placement Guide as the source of truth.
+
+Steps:
+
+1. Invoke `Skill` → `tasks-for-sonnet` to load § Placement Guide and § Plan-Time Tagging.
+2. Walk every task in `<plans-dir>/YYYY-MM-DD-<slug>.md`. For each task, append an inline marker on its own line directly under the task header:
+
+   ```markdown
+   <!-- sonnet_eligible: true | false — rationale: <one line citing § Placement Guide row> -->
+   ```
+
+3. Apply § Placement Guide directly:
+   - **`true`** for: mappers / scouts (single module, file:line citations), single-concern reviewer trios, verifiers with PASS/FAIL, multi-file synthesis (transcript / session digestion), version / API fact-checks, cross-surface scouts, fully-templated scaffolding (only with explicit `carve_out: true` rationale).
+   - **`false`** for: application code requiring judgment (controllers, models with logic, business rules), tasks that touch money / auth / PII / migrations or any boundary trigger from `tasks-for-sonnet` § 3, sub-5-line tasks the parent should just do, tasks already iterated >2× this session.
+
+4. Append a "Sonnet eligibility table" section to the plan summarizing the tagging:
+
+   ```markdown
+   ## Sonnet eligibility (Phase 2.5)
+
+   | Task | sonnet_eligible | Rationale |
+   |---|---|---|
+   | <title> | true \| false | <one line> |
+   ```
+
+   This table is what `plan-review` (Phase 4) critiques alongside the plan. The inline markers are what the harness (Phase 8) consumes per task.
+
+5. Commit: `git commit -am "docs(plans): $TASK_SLUG — sonnet eligibility tagging"`.
+
+**Boundary safety:** any task that fails the trigger catalog (§ 3) check gets `sonnet_eligible: false` regardless of how mechanical it looks. Plan-review (Phase 4) flags any `true` tagging that touches a boundary trigger.
 
 ### 3. Add Harness Protocol section
 
@@ -177,6 +224,8 @@ Append a **Harness Protocol** section to the plan that lists the sprints and —
 ### 4. Plan review — auto-accept recommended options
 
 Invoke `Skill` → `plan-review`. When it asks for decisions, accept **every recommended option** unless it contradicts a documented project rule (CLAUDE.md, `.claude/rules/`). Fold the output back into the plan file.
+
+In addition to its standard concerns, `plan-review` MUST critique the Phase 2.5 Sonnet eligibility table: flag any `sonnet_eligible: true` task that touches a boundary trigger from `tasks-for-sonnet` § 3 (client-trust boundary, schema bounds, state/enum drift, provider reliability, PII/privacy, partial-vs-final lifecycle, live runtime path) or any money / auth / migration / >5-file scope. Re-tag those `false` per the recommendation before committing.
 
 ### 5. Save + commit the plan
 
@@ -224,6 +273,15 @@ for line in sys.stdin:
 
 ### 7. Validate + apply Codex plan findings (parallel fan-out) — **skip if `CODEX_OK=no`**
 
+Before fanning out, invoke `Skill` → `tasks-for-sonnet` to load § Dispatch Hygiene and the Scout Swarm pattern. Each `Explore` validator is a Sonnet scout and MUST be shaped accordingly:
+
+- Explicit `model: sonnet` on the dispatch — never inherited.
+- Pinned commit hash (`git rev-parse HEAD`) and absolute paths in the prompt.
+- Fresh-context opener: *"You do NOT know the parent's intent. Read the plan and the cited evidence cold. Find whether THIS finding is real, not whether the plan is good overall."*
+- Word cap (default 600).
+- Single concern per scout — name the other scouts' findings as out of scope.
+- One scout per finding; all `Task` calls in a single message (parallel dispatch).
+
 If Codex returns multiple independent findings, fan them out with `superpowers:dispatching-parallel-agents` — one `Explore` sub-agent per finding, each returning `{finding, valid, evidence: file:line, proposed_patch}`. Merge serially: valid → amend plan; invalid → "Rejected Codex findings" section with one-line justification per item. Commit: `git commit -am "docs(plans): $TASK_SLUG — codex round 1 patches"`.
 
 ### 8. Execute the plan — /go stays the Orchestrator
@@ -234,10 +292,24 @@ Use `superpowers:executing-plans` as playbook and `superpowers:subagent-driven-d
 2. **Verifier** sub-agent (fresh, zero context from Developer): reads the diff cold, runs the discovered verification gate + unit + typecheck + E2E-when-mandatory. Returns Verifier report.
 3. **Auditor** sub-agent (fresh, e.g., `feature-dev:code-reviewer`): scores each acceptance criterion 0-10 against the plan. Returns Auditor report.
 
+**Sonnet brief contract (Developer + Verifier).** Before dispatching any sub-agent that will run on Sonnet, invoke `Skill` → `tasks-for-sonnet` and shape the brief per § Dispatch Hygiene + § Task Template. Specifically:
+
+- **Developer (`sonnet_eligible: true`):** copy the task's "What Must Be True / Known Constraints / Mechanical Verification" sections from the plan into the brief verbatim. Pin the commit hash. State the word cap. Pass `model: sonnet` explicitly. For any boundary-touching task, the brief must cite the relevant § 3 trigger or state "no trigger applies" with a one-line reason.
+- **Developer (`sonnet_eligible: false`):** route to Opus per the existing decision rule (E2E-mandatory / >5 files / money / auth / migration). The plan's marker is the source of truth; the rule above is the fallback when no marker exists.
+- **Verifier (always Sonnet):** brief MUST include fresh-context opener, pinned commit hash, the structured PASS/FAIL JSON shape from `harness-protocol`, criterion→test:line mapping requirement, and explicit `model: sonnet`.
+
+**Auditor (Opus verdict, optional Sonnet fan-out).** The Auditor itself runs on Opus — verdict and 0–10 scoring are non-negotiable. The Opus Auditor MAY dispatch Sonnet sub-scouts for purely **mechanical sub-tasks**:
+
+- Enumerating `triggers_satisfied: [{trigger_id, file, line}]` from `tasks-for-sonnet` § 3 against the sprint diff.
+- Mapping each plan acceptance criterion to its covering test:line.
+- Grepping for completeness counts (env-var reads vs `.env.example` entries, `process.env[` reads, etc.).
+
+When the Auditor fans out, each sub-scout brief MUST follow `tasks-for-sonnet` § Dispatch Hygiene: explicit `model: sonnet`, pinned commit, single concern per scout, fresh-context opener, word cap, all dispatches in one message. The Auditor reads the sub-scout outputs and assigns the score itself — sub-scouts return enumerations, not verdicts.
+
 Parallelism rules inside phase 8:
 - Across sprints → serial.
 - Within a single sprint → roles serial, never parallel.
-- Within a single role, truly independent subtasks → fan out via `superpowers:dispatching-parallel-agents`.
+- Within a single role, truly independent subtasks → fan out via `superpowers:dispatching-parallel-agents`. Sonnet scouts (Developer subtasks, Verifier subtasks, Auditor sub-scouts) follow `tasks-for-sonnet` Scout Swarm pattern.
 
 If any Auditor score <9 → loop the sprint with Developer, passing failing criteria + evidence. Same sub-agent that failed does NOT also re-evaluate. After Auditor green → commit the sprint.
 
@@ -297,8 +369,8 @@ for line in sys.stdin:
 
 ### 12. Validate + fix real findings (parallel validation, serial fixes) — **skip if `CODEX_OK=no`**
 
-1. Fan out validation with `superpowers:dispatching-parallel-agents` — one sub-agent per finding, returning `{valid, evidence: file:line, fix_approach}`.
-2. **Fixes are serial** (clean commit history, avoid merge conflicts). For each valid finding /go runs the mini-harness: Developer writes failing test first + fix, Verifier runs gates, Auditor confirms resolution. Commit per finding: `fix($TASK_SLUG): <finding>`.
+1. Before fan-out, invoke `Skill` → `tasks-for-sonnet` to load § Dispatch Hygiene + Scout Swarm pattern. Then fan out validation with `superpowers:dispatching-parallel-agents` — one Sonnet `Explore` sub-agent per finding (explicit `model: sonnet`, pinned commit hash, fresh-context opener, word cap, single concern per scout, all `Task` calls in one message), returning `{valid, evidence: file:line, fix_approach}`.
+2. **Fixes are serial** (clean commit history, avoid merge conflicts). For each valid finding /go runs the mini-harness: Developer writes failing test first + fix, Verifier runs gates, Auditor confirms resolution. Developer / Verifier / Auditor briefs follow the same Sonnet contract as Phase 8 (tagging + § Dispatch Hygiene). Commit per finding: `fix($TASK_SLUG): <finding>`.
 3. Invalid findings → "Rejected final-audit findings" section in the plan with one-line reasoning.
 4. If any code changed, re-run the discovered verification gate before declaring done.
 
