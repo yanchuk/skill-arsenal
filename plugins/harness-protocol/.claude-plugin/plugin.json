@@ -1,7 +1,7 @@
 {
   "name": "harness-protocol",
   "description": "Orchestrator → Developer → Verifier → Auditor harness for multi-sprint / multi-file work. Generator never self-evaluates. >9/10 per-criterion threshold. Auditor scores against typed Vn assertions from a Validation Contract authored before any code. Hard dependency on obra/superpowers. Project-agnostic.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": {
     "name": "yanchuk"
   },

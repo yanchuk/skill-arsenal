@@ -20,7 +20,7 @@ This skill expects [`obra/superpowers`](https://github.com/obra/superpowers) to 
 - `superpowers:subagent-driven-development` (Developer + Verifier briefs read from its `implementer-prompt.md` / `spec-reviewer-prompt.md` references)
 - `superpowers:dispatching-parallel-agents`
 - `superpowers:test-driven-development`
-- `superpowers:code-reviewer` (used by the Auditor)
+- `superpowers:requesting-code-review` (used by the Auditor)
 - `superpowers:verification-before-completion`
 
 If any are missing, the orchestrator (`/go` Phase 1, or any caller of this skill) MUST refuse to run with a one-line install hint pointing at https://github.com/obra/superpowers — do NOT silently degrade. References by skill name (`superpowers:<name>`), never by file path, to survive upstream restructures.
@@ -91,7 +91,7 @@ The **Orchestrator → Generator → Evaluator** pattern. The main conversation 
 7. Loop until all PASS
 
 ### Phase D — Audit
-8. Spawn **Auditor agent** (completely fresh, skeptical prompt — e.g., `feature-dev:code-reviewer` or `superpowers:code-reviewer`).
+8. Spawn **Auditor agent** (completely fresh, skeptical prompt — e.g., `feature-dev:code-reviewer` or `superpowers:requesting-code-review`).
 9. Auditor grades each criterion 1-10 with file:line evidence.
 10. **For boundary-touching diffs**, the Auditor MUST also enumerate `triggers_satisfied: [{trigger_id, file, line}]` for every trigger in `tasks-for-sonnet/SKILL.md` § 3 that applies to the diff. Empty enumeration on a boundary diff is an audit failure — either the auditor didn't check or the implementer didn't apply.
 11. If any criterion <9/10 → Developer fixes → Auditor re-grades → loop.

@@ -24,7 +24,7 @@ This skill expects [`obra/superpowers`](https://github.com/obra/superpowers) to 
 - `superpowers:subagent-driven-development`
 - `superpowers:dispatching-parallel-agents`
 - `superpowers:test-driven-development`
-- `superpowers:code-reviewer`
+- `superpowers:requesting-code-review`
 - `superpowers:verification-before-completion`
 - `superpowers:finishing-a-development-branch`
 

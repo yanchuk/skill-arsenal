@@ -24,7 +24,7 @@ This skill expects [`obra/superpowers`](https://github.com/obra/superpowers) to 
 - `superpowers:writing-plans`
 - `superpowers:subagent-driven-development`
 - `superpowers:test-driven-development`
-- `superpowers:code-reviewer`
+- `superpowers:requesting-code-review`
 - `superpowers:verification-before-completion`
 - `superpowers:finishing-a-development-branch`
 
@@ -212,7 +212,7 @@ Invoke `Skill` → `superpowers:subagent-driven-development`. That skill already
 1. Implementer subagent (fresh context, model = `placement` from the marker) writes the failing test, then the code, runs gates, self-reviews, commits.
 2. Spec reviewer subagent (fresh context) confirms code matches the task spec. Loops the implementer if not.
 3. Code-quality reviewer subagent (fresh context) confirms quality. Loops if not.
-4. Final code reviewer (`superpowers:code-reviewer`) on the cumulative diff after all tasks.
+4. Final code review (`superpowers:requesting-code-review`) on the cumulative diff after all tasks.
 
 `/quick`'s only addition: when the implementer is dispatched on a `placement: sonnet` task, pass `model: sonnet` explicitly and copy the task's "What Must Be True / Known Constraints / Mechanical Verification" sections from the plan into the brief verbatim. For `placement: main`, dispatch with the parent's model (Opus).
 

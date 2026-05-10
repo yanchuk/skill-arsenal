@@ -39,7 +39,7 @@ This doc is the canonical record of what we shipped, what we deferred, and the s
    │       └─ code-quality-reviewer-prompt.md                          │
    │  superpowers:dispatching-parallel-agents ◀── scout fan-out       │
    │  superpowers:test-driven-development                              │
-   │  superpowers:code-reviewer            ◀── Audit invocation        │
+   │  superpowers:requesting-code-review   ◀── Audit invocation        │
    │  superpowers:verification-before-completion                       │
    │  superpowers:finishing-a-development-branch ◀── /go Phase 14      │
    └──────────────────────────────────────────────────────────────────┘

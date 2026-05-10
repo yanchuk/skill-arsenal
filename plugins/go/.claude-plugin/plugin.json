@@ -1,7 +1,7 @@
 {
   "name": "go",
   "description": "End-to-end feature pipeline: plan → Validation Contract → harness protocol → plan-review → Codex audit → execute → simplify → final Codex audit. Runs inside an isolated git worktree. Hard dependency on obra/superpowers (Phase 1 fail-fast probe). Codex is optional; skipped when CLI unavailable. Project-agnostic.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": {
     "name": "yanchuk"
   },
