@@ -15,11 +15,25 @@ zero user intervention between phases. The task comes from the conversation or
 the `/go <task>` argument. If the task is ambiguous, ask ONE clarifying
 question before starting — after that, execute silently.
 
+## Required dependencies
+
+This skill expects [`obra/superpowers`](https://github.com/obra/superpowers) to be installed and loaded in the same environment. The following skills are invoked by name and MUST resolve:
+
+- `superpowers:writing-plans`
+- `superpowers:executing-plans`
+- `superpowers:subagent-driven-development`
+- `superpowers:dispatching-parallel-agents`
+- `superpowers:test-driven-development`
+- `superpowers:code-reviewer`
+- `superpowers:verification-before-completion`
+- `superpowers:finishing-a-development-branch`
+
+Phase 1 (setup) probes for each via the `Skill` tool. On any miss → abort the run with the install hint, do not create a worktree, do not commit anything. References by skill name (`superpowers:<name>`), never by file path.
+
 ## Dependencies (other skills invoked)
 
-- `harness-protocol` — required. Loaded from this same arsenal. `/go` is the Orchestrator described there.
+- `harness-protocol` — required. Loaded from this same arsenal. `/go` is the Orchestrator described there. Authoritative for Validation Contract rules, Auditor return contract, and the `references/auditor-prompt.md` brief.
 - `tasks-for-sonnet` — required. Loaded from this same arsenal. Owns the Sonnet placement decision (Phase 2.5) and the dispatch contract for every Sonnet sub-agent (phases 7, 8, 12). `/go` never spawns a Sonnet sub-agent without first invoking it.
-- `superpowers:writing-plans`, `superpowers:executing-plans`, `superpowers:test-driven-development`, `superpowers:dispatching-parallel-agents`, `superpowers:subagent-driven-development`.
 - `plan-review` — from this arsenal.
 - `simplify` — any implementation available in the environment (e.g., gstack).
 - `codex` — for plan audit and final audit. **Optional.** If the Codex CLI is not available, is not authenticated, or fails a smoke check, `/go` skips phases 6, 7, 11, and 12's Codex call and logs a note in the plan's "Rejected final-audit findings" section so the omission is explicit.
@@ -139,29 +153,40 @@ Whatever form the input takes, treat it as **stories + intent** — not as a det
 
 ## Execution sequence
 
-Use `TaskCreate` up front to materialize **all fifteen phases as separate todos** so the user can watch progress. Mark each completed as you go.
+Use `TaskCreate` up front to materialize **all sixteen phases as separate todos** so the user can watch progress. Mark each completed as you go.
 
-**Anti-bundling rule:** Phases 2, 2.5, 3, 4, and 5 are five distinct todos and five distinct commits. Never merge them — especially not when an upstream PM plan exists. `plan-review` (phase 4) pauses for `AskUserQuestion` and must be visible in the task list so the user can see it ran; if it is bundled into an adjacent todo it gets skipped silently. `writing-plans` (phase 2) must be visible for the same reason — a task labeled "Copy plan" signals that the skill skipped its own authoring step. Phase 2.5 (Sonnet eligibility tagging) must also stand alone — bundling it into phase 3 hides the tagging decision from `plan-review`'s critique surface.
+**Anti-bundling rule:** Phases 2, 2.5, 2.6, 3, 4, and 5 are six distinct todos and six distinct commits. Never merge them — especially not when an upstream PM plan exists. `plan-review` (phase 4) pauses for `AskUserQuestion` and must be visible in the task list so the user can see it ran; if it is bundled into an adjacent todo it gets skipped silently. `writing-plans` (phase 2) must be visible for the same reason — a task labeled "Copy plan" signals that the skill skipped its own authoring step. Phase 2.5 (Sonnet eligibility tagging) and Phase 2.6 (Validation Contract authoring) must also stand alone — bundling either into Phase 3 hides their decisions from `plan-review`'s critique surface.
 
-The fifteen TaskCreate items (use these labels verbatim — do not invent shorter or combined labels):
+The sixteen TaskCreate items (use these labels verbatim — do not invent shorter or combined labels):
 
-1. Phase 1 — Setup worktree + project discovery + Codex readiness probe
+1. Phase 1 — Setup worktree + project discovery + superpowers probe + Codex readiness probe
 2. Phase 2 — writing-plans skill pass (detailed engineering plan)
 3. Phase 2.5 — Sonnet eligibility tagging (tasks-for-sonnet § Placement Guide)
-4. Phase 3 — Append Harness Protocol section
-5. Phase 4 — plan-review skill pass (auto-accept recommended options)
-6. Phase 5 — Commit the plan
-7. Phase 6 — Codex plan review (skip if unavailable)
-8. Phase 7 — Validate + apply Codex plan findings (skip if unavailable)
-9. Phase 8 — Execute sprints under harness protocol
-10. Phase 9 — Simplify pass
-11. Phase 10 — Clean tree + shipping gate
-12. Phase 11 — Final Codex audit (skip if unavailable)
-13. Phase 12 — Validate + fix final-audit findings (skip if unavailable)
-14. Phase 13 — Promote open findings to monthly ledger (skip if no project ledger directory)
-15. Phase 14 — Done — print summary
+4. Phase 2.6 — Author Validation Contract (typed Vn assertions)
+5. Phase 3 — Append Harness Protocol section
+6. Phase 4 — plan-review skill pass (auto-accept recommended options)
+7. Phase 5 — Commit the plan
+8. Phase 6 — Codex plan review (skip if unavailable)
+9. Phase 7 — Validate + apply Codex plan findings (skip if unavailable)
+10. Phase 8 — Execute sprints under harness protocol
+11. Phase 9 — Simplify pass
+12. Phase 10 — Clean tree + shipping gate
+13. Phase 11 — Final Codex audit (skip if unavailable)
+14. Phase 12 — Validate + fix final-audit findings (skip if unavailable)
+15. Phase 13 — Promote open findings to monthly ledger (skip if no project ledger directory)
+16. Phase 14 — Done — print summary
 
-### 1. Setup worktree
+### 1. Setup worktree + superpowers probe
+
+**Step 1a — superpowers precondition probe (run FIRST, before any worktree).**
+
+For each skill listed in § Required dependencies, attempt invocation via the `Skill` tool (e.g., `Skill(skill="superpowers:writing-plans", args="...probe...")`). Any miss = abort the run with this message verbatim:
+
+> `/go` requires `obra/superpowers` to be installed. Missing: `superpowers:<name>`. Install: https://github.com/obra/superpowers — then re-run `/go`.
+
+Do NOT create a worktree, do NOT create any commits, do NOT proceed. Exit cleanly. The probe is mandatory — it prevents downstream phases from failing in the middle of a run with a half-built worktree.
+
+**Step 1b — worktree.**
 
 ```bash
 TASK_SLUG="<kebab-case-slug>"
@@ -217,6 +242,55 @@ Steps:
 
 **Boundary safety:** any task that fails the trigger catalog (§ 3) check gets `sonnet_eligible: false` regardless of how mechanical it looks. Plan-review (Phase 4) flags any `true` tagging that touches a boundary trigger.
 
+### 2.6. Author Validation Contract
+
+Goal: turn the plan's free-text acceptance criteria into a flat, numbered list of **typed assertions** (`V1`, `V2`, …) that the Auditor can score against mechanically. This is what makes the harness's `>9/10` gate enforceable rather than judgment-heavy. Authoritative shape rules: `harness-protocol` § Validation Contract.
+
+Steps:
+
+1. Walk every task in `<plans-dir>/YYYY-MM-DD-<slug>.md`. Extract the user-observable behaviors from the task descriptions and acceptance criteria.
+
+2. For each behavior, write **exactly one** `Vn` line in **one of three forms** (no other shapes accepted):
+
+   - **(a) HTTP** — `Vn: <METHOD> <path> [while <precondition>] → <status>, body contains "<string>"`
+   - **(b) DB / state** — `Vn: <one-line state assertion expressible as a query>`
+   - **(c) UI** — `Vn: at <route> while <precondition>, <selector> reads "<string>"`
+
+3. **Reject** these shapes — rewrite to one of the three above, or drop:
+   - Pure intent restatements ("V3: payments page exists").
+   - Internal-state-only assertions ("V8: cache key is set").
+   - Compound assertions joined by AND/OR — split into separate `Vn`.
+
+4. Append a `## Validation Contract` section to the plan with the full numbered list:
+
+   ```markdown
+   ## Validation Contract
+
+   | ID | Shape | Assertion |
+   |----|-------|-----------|
+   | V1 | HTTP  | GET /healthz → 200, body contains "ok" |
+   | V2 | UI    | at /dashboard while unauthenticated, [role=heading] reads "Sign in to continue" |
+   | V3 | STATE | after V1, no rows inserted into requests table |
+   ```
+
+5. Annotate every task header in the plan with an inline marker on its own line directly under the task header:
+
+   ```markdown
+   ### Task 3: idle session timeout
+   <!-- validates: [V3, V7] -->
+   ```
+
+6. **Coverage checks (you MUST run these before commit):**
+   - Every task has `validates: [≥1]`. If any task has empty `validates:` → fix the plan or drop the task.
+   - Every `Vn` is claimed by ≥1 task. If any `Vn` is unclaimed → either drop it or add a task that claims it.
+   - ≤15 `Vn` per task ≤3 sprints. Over-cap → split the plan.
+
+7. Commit: `git commit -am "docs(plans): $TASK_SLUG — validation contract"`.
+
+**`plan-review` (Phase 4) gets the contract as a first-class critique surface** — see Phase 4 for the new check.
+
+**The Auditor at Phase 8 scores against `Vn` IDs** — see Phase 8 brief composition. The `Vn` table and per-task `validates:` markers are the audit substrate.
+
 ### 3. Add Harness Protocol section
 
 Append a **Harness Protocol** section to the plan that lists the sprints and — for each sprint — Developer / Verifier / Auditor responsibilities per the `harness-protocol` skill in this arsenal. Every sprint gets explicit acceptance criteria and a ≥9/10 threshold per criterion.
@@ -225,7 +299,18 @@ Append a **Harness Protocol** section to the plan that lists the sprints and —
 
 Invoke `Skill` → `plan-review`. When it asks for decisions, accept **every recommended option** unless it contradicts a documented project rule (CLAUDE.md, `.claude/rules/`). Fold the output back into the plan file.
 
-In addition to its standard concerns, `plan-review` MUST critique the Phase 2.5 Sonnet eligibility table: flag any `sonnet_eligible: true` task that touches a boundary trigger from `tasks-for-sonnet` § 3 (client-trust boundary, schema bounds, state/enum drift, provider reliability, PII/privacy, partial-vs-final lifecycle, live runtime path) or any money / auth / migration / >5-file scope. Re-tag those `false` per the recommendation before committing.
+In addition to its standard concerns, `plan-review` MUST critique two surfaces this skill produced earlier:
+
+1. **The Phase 2.5 Sonnet eligibility table.** Flag any `sonnet_eligible: true` task that touches a boundary trigger from `tasks-for-sonnet` § 3 (client-trust boundary, schema bounds, state/enum drift, provider reliability, PII/privacy, partial-vs-final lifecycle, live runtime path) or any money / auth / migration / >5-file scope. Re-tag those `false` per the recommendation before committing.
+
+2. **The Phase 2.6 Validation Contract.** Apply the rules in `harness-protocol` § Validation Contract. Block the plan if any of:
+   - A `Vn` is not in one of the three accepted shapes (HTTP / DB-state / UI selector).
+   - A `Vn` reads as pure intent restatement, internal-state-only, or compound (AND/OR).
+   - A task has empty `validates:` (every task MUST claim ≥1 `Vn`).
+   - A `Vn` is unclaimed by any task.
+   - A task ≤3 sprints declares >15 `Vn` (scope alarm — split it).
+
+   `plan-review` rewrites or drops the offending `Vn` and re-runs the coverage checks before signing off.
 
 ### 5. Save + commit the plan
 
@@ -292,16 +377,24 @@ Use `superpowers:executing-plans` as playbook and `superpowers:subagent-driven-d
 2. **Verifier** sub-agent (fresh, zero context from Developer): reads the diff cold, runs the discovered verification gate + unit + typecheck + E2E-when-mandatory. Returns Verifier report.
 3. **Auditor** sub-agent (fresh, e.g., `feature-dev:code-reviewer`): scores each acceptance criterion 0-10 against the plan. Returns Auditor report.
 
+**Validation Contract handoff (every brief).** Every Developer / Verifier / Auditor brief composed by `/go` in Phase 8 MUST include:
+
+- The **full `## Validation Contract` table from the plan, verbatim** (the `Vn` list).
+- The **per-sprint `TASK_VALIDATES`** — the union of `<!-- validates: [Vn...] -->` markers from every task assigned to this sprint.
+- Pinned commit hash (`git rev-parse HEAD`) and the `SPRINT_DIFF_RANGE` (`origin/$DEFAULT_BRANCH..HEAD`).
+
+This is what makes the Auditor's score mechanical (Vn → file:line → score) instead of judgment-heavy.
+
 **Sonnet brief contract (Developer + Verifier).** Before dispatching any sub-agent that will run on Sonnet, invoke `Skill` → `tasks-for-sonnet` and shape the brief per § Dispatch Hygiene + § Task Template. Specifically:
 
-- **Developer (`sonnet_eligible: true`):** copy the task's "What Must Be True / Known Constraints / Mechanical Verification" sections from the plan into the brief verbatim. Pin the commit hash. State the word cap. Pass `model: sonnet` explicitly. For any boundary-touching task, the brief must cite the relevant § 3 trigger or state "no trigger applies" with a one-line reason.
+- **Developer (`sonnet_eligible: true`):** copy the task's "What Must Be True / Known Constraints / Mechanical Verification" sections from the plan into the brief verbatim. Include `validates: [Vn...]` and the relevant `Vn` rows from the contract — the Developer must write tests that exercise each claimed `Vn`. Pin the commit hash. State the word cap. Pass `model: sonnet` explicitly. For any boundary-touching task, the brief must cite the relevant § 3 trigger or state "no trigger applies" with a one-line reason.
 - **Developer (`sonnet_eligible: false`):** route to Opus per the existing decision rule (E2E-mandatory / >5 files / money / auth / migration). The plan's marker is the source of truth; the rule above is the fallback when no marker exists.
-- **Verifier (always Sonnet):** brief MUST include fresh-context opener, pinned commit hash, the structured PASS/FAIL JSON shape from `harness-protocol`, criterion→test:line mapping requirement, and explicit `model: sonnet`.
+- **Verifier (always Sonnet):** brief MUST include fresh-context opener, pinned commit hash, the structured PASS/FAIL JSON shape from `harness-protocol` (with `criterion_id` = `Vn`), per-`Vn` `coverage_map: [{criterion_id, test_file:line}]` requirement, and explicit `model: sonnet`. Verifier verdict is FAIL if any claimed `Vn` lacks a covering test.
 
-**Auditor (Opus verdict, optional Sonnet fan-out).** The Auditor itself runs on Opus — verdict and 0–10 scoring are non-negotiable. The Opus Auditor MAY dispatch Sonnet sub-scouts for purely **mechanical sub-tasks**:
+**Auditor brief = `harness-protocol/references/auditor-prompt.md` + filled-in inputs.** Do NOT inline the Auditor prompt at this dispatch site. Read the reference file, fill in `PINNED_COMMIT`, `PLAN_PATH`, `SPRINT`, `SPRINT_DIFF_RANGE`, `TASK_VALIDATES`, `VALIDATION_CONTRACT`, and pass the whole as the brief. The Auditor itself runs on Opus — verdict and 0–10 scoring per `Vn` are non-negotiable. The Opus Auditor MAY dispatch Sonnet sub-scouts for purely **mechanical sub-tasks**:
 
+- Mapping each `Vn` in `TASK_VALIDATES` to its covering test:line via grep.
 - Enumerating `triggers_satisfied: [{trigger_id, file, line}]` from `tasks-for-sonnet` § 3 against the sprint diff.
-- Mapping each plan acceptance criterion to its covering test:line.
 - Grepping for completeness counts (env-var reads vs `.env.example` entries, `process.env[` reads, etc.).
 
 When the Auditor fans out, each sub-scout brief MUST follow `tasks-for-sonnet` § Dispatch Hygiene: explicit `model: sonnet`, pinned commit, single concern per scout, fresh-context opener, word cap, all dispatches in one message. The Auditor reads the sub-scout outputs and assigns the score itself — sub-scouts return enumerations, not verdicts.
@@ -311,7 +404,7 @@ Parallelism rules inside phase 8:
 - Within a single sprint → roles serial, never parallel.
 - Within a single role, truly independent subtasks → fan out via `superpowers:dispatching-parallel-agents`. Sonnet scouts (Developer subtasks, Verifier subtasks, Auditor sub-scouts) follow `tasks-for-sonnet` Scout Swarm pattern.
 
-If any Auditor score <9 → loop the sprint with Developer, passing failing criteria + evidence. Same sub-agent that failed does NOT also re-evaluate. After Auditor green → commit the sprint.
+If any Auditor `score_0_10 < 9` for a claimed `Vn`, OR `unclaimed_assertions` is non-empty, OR a `severity: "blocker"` finding is returned → loop the sprint with Developer, passing the failing `Vn` IDs + their `evidence: file:line` + reasoning. The sub-agent that failed does NOT also re-evaluate. After Auditor green (every claimed `Vn` ≥9 and `unclaimed_assertions: []`) → commit the sprint.
 
 ### 9. Simplify pass
 

@@ -1,0 +1,11 @@
+{
+  "name": "quick",
+  "description": "Single-task feature pipeline for 1-3 file changes. Plan → tasks-for-sonnet placement + in-place plan shaping → optional Codex review → subagent-driven-development → done. No worktree, no harness, no Validation Contract. Routes to /go when boundary triggers (money / auth / migration / >5 files / client-trust / schema / state-drift / provider-reliability / PII / lifecycle / live-runtime-path) fire. Hard dependency on obra/superpowers. Project-agnostic.",
+  "version": "1.0.0",
+  "author": {
+    "name": "yanchuk"
+  },
+  "keywords": ["pipeline", "single-task", "small-change", "no-harness", "no-worktree", "sonnet"],
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal"
+}

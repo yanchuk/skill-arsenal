@@ -5,7 +5,8 @@ Architecture diagram showing the four-layer skill system and dependency relation
 ```mermaid
 graph TB
     subgraph Orchestration["Orchestration Skills"]
-        GO["go"]
+        GO["go (sprinted)"]
+        QK["quick (single-task)"]
         HP["harness-protocol"]
     end
 
@@ -26,9 +27,20 @@ graph TB
         P74["prompt-74"]
     end
 
+    subgraph External["External (hard dep)"]
+        SP["obra/superpowers<br/>writing-plans · subagent-driven-dev<br/>dispatching-parallel-agents · TDD<br/>code-reviewer · verification-before-completion<br/>finishing-a-development-branch"]
+    end
+
     %% Orchestration → other skills
     GO -->|"invokes"| HP
     GO -->|"invokes"| PR
+    QK -.->|"opt-in --review"| PR
+    QK -->|"routes to /go on boundary"| GO
+
+    %% Hard dependency on superpowers (fail-fast probe at Phase 1)
+    GO ==>|"hard dep · Phase 1 probe"| SP
+    HP ==>|"hard dep"| SP
+    QK ==>|"hard dep · Phase 1 probe"| SP
 
     %% Domain → Infrastructure invocations
     WR -->|"invokes"| WTR
@@ -51,6 +63,8 @@ graph TB
     style PR fill:#ffa64d,stroke:#cc7a30,color:#fff
     style GO fill:#c678dd,stroke:#8e3da8,color:#fff
     style HP fill:#c678dd,stroke:#8e3da8,color:#fff
+    style QK fill:#c678dd,stroke:#8e3da8,color:#fff
+    style SP fill:#e74c3c,stroke:#a93226,color:#fff
 ```
 
 ## Legend
@@ -59,5 +73,7 @@ graph TB
 - **Blue (Infrastructure):** Shared capabilities invoked by domain skills at runtime via the Skill tool
 - **Green (Domain):** Research/analysis skills that invoke infrastructure + add domain-specific logic and overrides
 - **Orange (Standalone):** Independent skills with no cross-skill dependencies
+- **Red (External hard dep):** Third-party plugin required for the orchestration skills to run; `/go` Phase 1 fail-fast probe aborts cleanly when any required `superpowers:*` skill is missing
 - **Solid arrows:** "invokes at runtime via Skill tool"
+- **Bold arrows (`==>`):** "hard dependency — skill refuses to run if missing"
 - **Dashed arrows:** conditional invocation (only on specific paths)

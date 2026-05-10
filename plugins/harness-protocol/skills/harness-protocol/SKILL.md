@@ -12,6 +12,19 @@ description: >
 
 **Use this for any task spanning multiple sprints, waves, or >5 files.**
 
+## Required dependencies
+
+This skill expects [`obra/superpowers`](https://github.com/obra/superpowers) to be installed and loaded in the same environment. The following skills are invoked by name and MUST resolve:
+
+- `superpowers:writing-plans`
+- `superpowers:subagent-driven-development` (Developer + Verifier briefs read from its `implementer-prompt.md` / `spec-reviewer-prompt.md` references)
+- `superpowers:dispatching-parallel-agents`
+- `superpowers:test-driven-development`
+- `superpowers:code-reviewer` (used by the Auditor)
+- `superpowers:verification-before-completion`
+
+If any are missing, the orchestrator (`/go` Phase 1, or any caller of this skill) MUST refuse to run with a one-line install hint pointing at https://github.com/obra/superpowers — do NOT silently degrade. References by skill name (`superpowers:<name>`), never by file path, to survive upstream restructures.
+
 The **Orchestrator → Generator → Evaluator** pattern. The main conversation is the orchestrator — it NEVER implements features or evaluates its own work.
 
 ```
@@ -136,8 +149,53 @@ Each sub-agent returns a structured report so the Orchestrator can make decision
 
 **Developer:** `{ files_changed, tests_added, gates_run, gates_status, diff_summary, notes }`
 
-**Verifier:** `{ gates_status, coverage_map: [{criterion, test_file:line}], failures: [{file:line, reason}], verdict: PASS|FAIL }`
+**Verifier:** `{ gates_status, coverage_map: [{criterion_id, test_file:line}], failures: [{file:line, reason}], verdict: PASS|FAIL }`
+- `criterion_id` is the `Vn` ID from the Validation Contract (see below). Verifier MUST map every `Vn` claimed by the sprint to a `test_file:line`. Any claimed `Vn` without a covering test → `verdict: FAIL`.
 
-**Auditor:** `{ scores: [{criterion, score_0_10, evidence: file:line, reasoning}], overall_verdict: PASS|FAIL, blocking_findings: [...] }`
+**Auditor:** `{ scores: [{criterion_id, criterion_text, score_0_10, evidence: file:line, reasoning}], unclaimed_assertions: [Vn...], overall_verdict: PASS|FAIL, blocking_findings: [...] }`
+- `criterion_id` is the `Vn` ID being scored.
+- `unclaimed_assertions` lists any `Vn` from the plan's Validation Contract that is not claimed by any task. Non-empty → `overall_verdict: FAIL`.
+- Auditor verdict rule: any claimed `Vn` with `score_0_10 < 9` OR non-empty `unclaimed_assertions` OR any `severity: blocker` finding → `FAIL`.
+- **Auditor brief:** see `references/auditor-prompt.md`. The orchestrator composes the brief by reading that file plus filling in `PINNED_COMMIT`, `PLAN_PATH`, `SPRINT`, `SPRINT_DIFF_RANGE`, `TASK_VALIDATES`, `VALIDATION_CONTRACT`. Do NOT inline the prompt at dispatch sites — reference the file so updates propagate.
 
 Store each report under `.context/harness/<sprint>/<role>.json` for later audit-of-audit and retros.
+
+## Validation Contract
+
+The Auditor scores against a **flat, numbered list of typed assertions** (`V1`, `V2`, …) authored *before* any code, not against scattered acceptance-criteria text. The orchestrator (e.g., `/go` Phase 2.6) is responsible for producing this list and embedding it in the plan; this skill defines the rules every `Vn` MUST satisfy.
+
+### Assertion shape
+
+Every `Vn` MUST be expressible as one of:
+
+- **(a) HTTP** — `Vn: <METHOD> <path> [while <precondition>] → <status>, body contains "<string>"`
+  Example: `V3: POST /payments {amount: -1} → 400, body contains "amount must be positive"`.
+
+- **(b) DB / state** — a row-level state assertion expressible as a query.
+  Example: `V7: after V3, payments table row count unchanged`.
+
+- **(c) UI** — a user-visible string at a CSS / role selector.
+  Example: `V12: at /dashboard while unauthenticated, [role=heading] reads "Sign in to continue"`.
+
+### Forbidden assertion shapes (rejected at `plan-review`)
+
+- **Pure intent restatements.** "V3: payments page exists." If a human can't observe failure from outside the system, the assertion is wrong.
+- **Internal-state-only assertions.** "V8: cache key is set." Internal state is not a user-observable contract.
+- **Compound assertions.** One `Vn` per behavior; split if joined by AND/OR.
+
+### Coverage rules
+
+- **Cap:** ≤15 `Vn` per task ≤3 sprints. >15 → scope alarm; `plan-review` flags it.
+- **Every task** in the plan MUST declare `validates: [Vn, ...]` (≥1 entry). Tasks with empty `validates:` fail `plan-review`.
+- **Every `Vn`** MUST be claimed by ≥1 task. Unclaimed `Vn` fails `plan-review`.
+
+### Where it lives in the plan
+
+The orchestrator inserts a `## Validation Contract` section in the plan file with the full numbered list, and annotates each task header with an inline marker:
+
+```markdown
+### Task 3: idle session timeout
+<!-- validates: [V3, V7] -->
+```
+
+The harness reads `validates:` markers per task at sprint dispatch time; the Auditor brief receives both the per-sprint claims and the full Validation Contract verbatim.
