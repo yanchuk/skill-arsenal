@@ -33,14 +33,14 @@ Phase 1 (setup) probes for each via the `Skill` tool. On any miss → abort the 
 ## Dependencies (other skills invoked)
 
 - `harness-protocol` — required. Loaded from this same arsenal. `/go` is the Orchestrator described there. Authoritative for Validation Contract rules, Auditor return contract, and the `references/auditor-prompt.md` brief.
-- `tasks-for-sonnet` — required. Loaded from this same arsenal. Owns the Sonnet placement decision (Phase 2.5) and the dispatch contract for every Sonnet sub-agent (phases 7, 8, 12). `/go` never spawns a Sonnet sub-agent without first invoking it.
+- `agent-task-briefs` — required. Loaded from this same arsenal. Owns the worker model placement decision (Phase 2.5) and the dispatch contract for every worker model sub-agent (phases 7, 8, 12). `/go` never spawns a worker model sub-agent without first invoking it.
 - `plan-review` — from this arsenal.
 - `simplify` — any implementation available in the environment (e.g., gstack).
 - `codex` — for plan audit and final audit. **Optional.** If the Codex CLI is not available, is not authenticated, or fails a smoke check, `/go` skips phases 6, 7, 11, and 12's Codex call and logs a note in the plan's "Rejected final-audit findings" section so the omission is explicit.
 
 ## Non-negotiable guardrails
 
-- **All work happens in a new git worktree** under `~/.claude/worktrees/` with a descriptive kebab-case name derived from the task. Never work on the default branch directly.
+- **All work happens in a new git worktree** under `~/.agent-worktrees/` with a descriptive kebab-case name derived from the task. Never work on the default branch directly.
 - **Every phase produces a commit.** Never squash phases together.
 - **Codex thread is reused across the two Codex passes** (plan review + final review). Persist the session id to `.context/codex-session-id` between calls and resume via `codex exec resume <session-id>`.
 - **Harness is orchestrator-owned** (see `harness-protocol`). `/go` spawns Developer → Verifier → Auditor sub-agents per sprint. No sub-agent plays two roles. No self-evaluation. No batched sprints.
@@ -48,44 +48,44 @@ Phase 1 (setup) probes for each via the `Skill` tool. On any miss → abort the 
 - **Never bypass hooks or test gates** (`--no-verify`, `SKIP_E2E=1`, etc.) unless the user explicitly authorizes it for a docs-only change.
 - When Codex raises a finding, **validate it against the actual code** before acting. Fabricated/stale findings get documented as rejected with reasoning; real ones get fixed in their own commits.
 
-## Model tiering (Opus vs Sonnet inside `/go`)
+## Model tiering (brain model vs worker model inside `/go`)
 
 Sub-agents spawned by `/go` do not all need the same model. Tier by role, not by phase. The hard rule: **the Auditor must never be tiered down**. The harness's >9/10 gate is what protects every sprint downstream; degrading the gate degrades the protocol.
 
-`tasks-for-sonnet` is the canonical brief-shaper for every Sonnet sub-agent. The table below picks which role uses Sonnet; `tasks-for-sonnet` § Placement Guide / § Dispatch Hygiene / § Task Template decides whether a *given task* fits that Sonnet role and how the prompt is shaped before the dispatch button is pressed.
+`agent-task-briefs` is the canonical brief-shaper for every worker model sub-agent. The table below picks which role uses worker model; `agent-task-briefs` § Placement Guide / § Dispatch Hygiene / § Task Template decides whether a *given task* fits that worker model role and how the prompt is shaped before the dispatch button is pressed.
 
 | Sub-agent role | Phases | Model |
 |---|---|---|
-| `superpowers:writing-plans` author | 2 | Opus — wrong-shape plan poisons all downstream phases |
-| Sonnet eligibility tagger | 2.5 | Opus — tagging is a judgment call; uses `tasks-for-sonnet` § Placement Guide |
-| `plan-review` reviewer | 4 | Opus — same poison-the-well risk |
-| Codex-finding validator (`Explore`) | 7, 12 | Sonnet — narrow, evidence-based per finding; brief shaped via `tasks-for-sonnet` |
-| **Developer** | 8 | **Mixed** — see decision rule below; Sonnet briefs shaped via `tasks-for-sonnet` |
-| **Verifier** | 8 | Sonnet — structured PASS/FAIL with evidence; brief shaped via `tasks-for-sonnet` |
-| **Auditor (verdict + scoring)** | 8, 12-mini | **Opus — non-negotiable.** Long-context skeptical grading is the protocol's quality multiplier |
-| Auditor mechanical sub-scouts | 8 | Sonnet — see Auditor fan-out carve-out below |
-| `simplify` pass | 9 | Sonnet |
-| Ledger promotion | 13 | Sonnet (or deterministic shell) |
+| `superpowers:writing-plans` author | 2 | brain model — wrong-shape plan poisons all downstream phases |
+| Worker-agent eligibility tagger | 2.5 | brain model — tagging is a judgment call; uses `agent-task-briefs` § Placement Guide |
+| `plan-review` reviewer | 4 | brain model — same poison-the-well risk |
+| Codex-finding validator (`Explore`) | 7, 12 | worker model — narrow, evidence-based per finding; brief shaped via `agent-task-briefs` |
+| **Developer** | 8 | **Mixed** — see decision rule below; Worker-agent briefs shaped via `agent-task-briefs` |
+| **Verifier** | 8 | worker model — structured PASS/FAIL with evidence; brief shaped via `agent-task-briefs` |
+| **Auditor (verdict + scoring)** | 8, 12-mini | **brain model — non-negotiable.** Long-context skeptical grading is the protocol's quality multiplier |
+| Auditor mechanical sub-scouts | 8 | worker model — see Auditor fan-out carve-out below |
+| `simplify` pass | 9 | worker model |
+| Ledger promotion | 13 | worker model (or deterministic shell) |
 
-**Developer decision rule.** Use Opus when the sprint touches:
+**Developer decision rule.** Use brain model when the sprint touches:
 
-- Any path the project marks as E2E-mandatory (read `.claude/rules/testing-gates.md`).
+- Any path the project marks as E2E-mandatory (read `.claude/rules/testing-gates.md`, `.codex/rules/testing-gates.md`, or the runtime equivalent).
 - Any new abstraction, new module, or refactor crossing >5 files.
 - Any money / auth / state-transition / migration change.
 
-Otherwise use Sonnet. The plan's `sonnet_eligible: true|false` markers (set in Phase 2.5 and reviewed in Phase 4) are the per-task source of truth — the rule above is the fallback when no marker exists.
+Otherwise use worker model. The plan's `worker_agent_eligible: true|false` markers (set in Phase 2.5 and reviewed in Phase 4) are the per-task source of truth — the rule above is the fallback when no marker exists.
 
-**Auditor fan-out carve-out.** The Auditor itself runs on Opus (verdict + 0–10 scoring is non-negotiable). However, the Opus Auditor MAY dispatch Sonnet sub-scouts in parallel for purely **mechanical sub-tasks**:
+**Auditor fan-out carve-out.** The Auditor itself runs on brain model (verdict + 0–10 scoring is non-negotiable). However, the brain model Auditor MAY dispatch worker model sub-scouts in parallel for purely **mechanical sub-tasks**:
 
-- Enumerating `triggers_satisfied: [{trigger_id, file, line}]` against the diff for every trigger in `tasks-for-sonnet` § 3.
+- Enumerating `triggers_satisfied: [{trigger_id, file, line}]` against the diff for every trigger in `agent-task-briefs` § 3.
 - Mapping each plan acceptance criterion to its covering test:line.
 - Grepping for completeness counts (env-var reads vs `.env.example` entries, etc.).
 
-When the Auditor fans out, each sub-scout brief MUST follow `tasks-for-sonnet` § Dispatch Hygiene: explicit `model: sonnet`, pinned commit hash, single concern per scout, fresh-context opener, word cap. The Auditor consumes the sub-scouts' outputs into its own report; the Opus Auditor still owns the scoring decision.
+When the Auditor fans out, each sub-scout brief MUST follow `agent-task-briefs` § Dispatch Hygiene: explicit `model: sonnet` or the runtime equivalent, pinned commit hash, single concern per scout, fresh-context opener, word cap. The Auditor consumes the sub-scouts' outputs into its own report; the brain model Auditor still owns the scoring decision.
 
-**Spawn instructions.** When spawning sub-agents in phases 7, 8, 9, 12, and 13, pass an explicit `model:` parameter to `Agent()` per the table above. Do not rely on the inherited model — the parent is usually Opus, and inheriting silently defeats the tiering. If `Agent()` does not accept a `model:` field in the runtime you're on, use `subagent_type` to pick an agent variant whose definition pins the right model. Before any Sonnet dispatch, invoke `Skill` → `tasks-for-sonnet` first; the skill's § Dispatch Hygiene is what makes Sonnet briefs reliable.
+**Spawn instructions.** When spawning sub-agents in phases 7, 8, 9, 12, and 13, pass an explicit `model:` parameter to `Agent()` per the table above. Do not rely on the inherited model — the parent is usually brain model, and inheriting silently defeats the tiering. If `Agent()` does not accept a `model:` field in the runtime you're on, use `subagent_type` to pick an agent variant whose definition pins the right model. Before any worker model dispatch, invoke `Skill` → `agent-task-briefs` first; the skill's § Dispatch Hygiene is what makes Worker-agent briefs reliable.
 
-**Why this is safe.** With the Auditor's verdict still on Opus, Sonnet errors at the Verifier or Developer level get caught and bounced back as a fix loop. Auditor fan-out is purely mechanical enumeration — the Opus Auditor reads the sub-scout outputs and assigns the score. Net effect across a 4-sprint task: roughly one extra fix loop, but each loop is faster + ~3–5× cheaper. Realistic wall-clock improvement: 25–35% end-to-end. The savings disappear if you tier down the Auditor's verdict.
+**Why this is safe.** With the Auditor's verdict still on brain model, worker model errors at the Verifier or Developer level get caught and bounced back as a fix loop. Auditor fan-out is purely mechanical enumeration — the brain model Auditor reads the sub-scout outputs and assigns the score. Net effect across a 4-sprint task: roughly one extra fix loop, but each loop is faster + ~3–5× cheaper. Realistic wall-clock improvement: 25–35% end-to-end. The savings disappear if you tier down the Auditor's verdict.
 
 ## Project discovery (do this first, cache results)
 
@@ -93,11 +93,13 @@ On startup `/go` discovers project conventions. Detect and remember:
 
 | Need | Discovery order |
 |------|-----------------|
-| **Verification gate command** | `.claude/rules/testing-gates.md` → `package.json` scripts (`verify`, `verify:wave`, `ci`, `check`, `test:all`) → `Makefile` (`verify`, `ci`, `check`) → language default (see `harness-protocol`). |
+| **Project instructions** | `AGENTS.md` → `CLAUDE.md` → runtime-specific instruction files. |
+| **Project rules** | `.claude/rules/` → `.codex/rules/` → runtime-specific rule directories. |
+| **Verification gate command** | `.claude/rules/testing-gates.md` or `.codex/rules/testing-gates.md` → `package.json` scripts (`verify`, `verify:wave`, `ci`, `check`, `test:all`) → `Makefile` (`verify`, `ci`, `check`) → language default (see `harness-protocol`). |
 | **Unit-test command** | `package.json` `test` → `Makefile test` → language default. |
 | **Typecheck command** | `package.json` `typecheck` / `tsc --noEmit` → `mypy` / `pyright` → `tsc`. Skip silently if not applicable. |
 | **E2E command** | `package.json` `playwright*` / `e2e*` → language default → skip if no E2E infra. |
-| **E2E-mandatory paths** | `.claude/rules/testing-gates.md` → fall back to: any user-facing route, any money/auth/state transition, any file that imports a payment/auth SDK. |
+| **E2E-mandatory paths** | `.claude/rules/testing-gates.md` or `.codex/rules/testing-gates.md` → fall back to: any user-facing route, any money/auth/state transition, any file that imports a payment/auth SDK. |
 | **Plans directory** | `docs/plans/` → `plans/` → `.plans/` → create `docs/plans/` if none. |
 | **Default branch** | `git symbolic-ref refs/remotes/origin/HEAD` → `origin/main` → `origin/master`. |
 | **Plan file naming** | `<plans-dir>/YYYY-MM-DD-<slug>.md`. |
@@ -142,7 +144,7 @@ If `CODEX_OK=no`:
 
 **Input (one of):**
 - a task description in the message (e.g., "/go add X");
-- an upstream PM/brief/story document (path passed in the message, or most recent file under `~/.claude/plans/` if the user points there);
+- an upstream PM/brief/story document (path passed in the message, or most recent file under `the runtime plans directory/` if the user points there);
 - a list of user stories with acceptance criteria.
 
 Whatever form the input takes, treat it as **stories + intent** — not as a detailed engineering plan. The PM spec answers *what the user wants*; /go is responsible for answering *how we build and verify it*.
@@ -153,15 +155,15 @@ Whatever form the input takes, treat it as **stories + intent** — not as a det
 
 ## Execution sequence
 
-Use `TaskCreate` up front to materialize **all sixteen phases as separate todos** so the user can watch progress. Mark each completed as you go.
+Create visible todos up front for **all sixteen phases** so the user can watch progress. Mark each completed as you go.
 
-**Anti-bundling rule:** Phases 2, 2.5, 2.6, 3, 4, and 5 are six distinct todos and six distinct commits. Never merge them — especially not when an upstream PM plan exists. `plan-review` (phase 4) pauses for `AskUserQuestion` and must be visible in the task list so the user can see it ran; if it is bundled into an adjacent todo it gets skipped silently. `writing-plans` (phase 2) must be visible for the same reason — a task labeled "Copy plan" signals that the skill skipped its own authoring step. Phase 2.5 (Sonnet eligibility tagging) and Phase 2.6 (Validation Contract authoring) must also stand alone — bundling either into Phase 3 hides their decisions from `plan-review`'s critique surface.
+**Anti-bundling rule:** Phases 2, 2.5, 2.6, 3, 4, and 5 are six distinct todos and six distinct commits. Never merge them — especially not when an upstream PM plan exists. `plan-review` (phase 4) pauses for `AskUserQuestion` and must be visible in the task list so the user can see it ran; if it is bundled into an adjacent todo it gets skipped silently. `writing-plans` (phase 2) must be visible for the same reason — a task labeled "Copy plan" signals that the skill skipped its own authoring step. Phase 2.5 (Worker-agent eligibility tagging) and Phase 2.6 (Validation Contract authoring) must also stand alone — bundling either into Phase 3 hides their decisions from `plan-review`'s critique surface.
 
-The sixteen TaskCreate items (use these labels verbatim — do not invent shorter or combined labels):
+The sixteen todo items (use these labels verbatim — do not invent shorter or combined labels):
 
 1. Phase 1 — Setup worktree + project discovery + superpowers probe + Codex readiness probe
 2. Phase 2 — writing-plans skill pass (detailed engineering plan)
-3. Phase 2.5 — Sonnet eligibility tagging (tasks-for-sonnet § Placement Guide)
+3. Phase 2.5 — Worker-agent eligibility tagging (agent-task-briefs § Placement Guide)
 4. Phase 2.6 — Author Validation Contract (typed Vn assertions)
 5. Phase 3 — Append Harness Protocol section
 6. Phase 4 — plan-review skill pass (auto-accept recommended options)
@@ -191,7 +193,7 @@ Do NOT create a worktree, do NOT create any commits, do NOT proceed. Exit cleanl
 ```bash
 TASK_SLUG="<kebab-case-slug>"
 DEFAULT_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@' || echo main)"
-WT=~/.claude/worktrees/$TASK_SLUG
+WT=~/.agent-worktrees/$TASK_SLUG
 git fetch origin "$DEFAULT_BRANCH"
 git worktree add "$WT" -b "$TASK_SLUG" "origin/$DEFAULT_BRANCH"
 cd "$WT"
@@ -209,29 +211,29 @@ Invoke `Skill` → `superpowers:writing-plans`. Input to writing-plans:
 
 The output engineering plan must cover: scope, acceptance criteria (each tied back to a user story if stories exist), guardrails, edge cases, and files to modify. Write the plan to `<plans-dir>/YYYY-MM-DD-<slug>.md`. Phases 2.5–5 mutate and commit this same file.
 
-### 2.5. Sonnet eligibility tagging
+### 2.5. Worker-agent eligibility tagging
 
-Goal: per-task decisions about *which model implements this* are made once, in the open, on the plan — not implicitly at dispatch time. This is the orchestrator's commitment to using `tasks-for-sonnet` § Placement Guide as the source of truth.
+Goal: per-task decisions about *which model implements this* are made once, in the open, on the plan — not implicitly at dispatch time. This is the orchestrator's commitment to using `agent-task-briefs` § Placement Guide as the source of truth.
 
 Steps:
 
-1. Invoke `Skill` → `tasks-for-sonnet` to load § Placement Guide and § Plan-Time Tagging.
+1. Invoke `Skill` → `agent-task-briefs` to load § Placement Guide and § Plan-Time Tagging.
 2. Walk every task in `<plans-dir>/YYYY-MM-DD-<slug>.md`. For each task, append an inline marker on its own line directly under the task header:
 
    ```markdown
-   <!-- sonnet_eligible: true | false — rationale: <one line citing § Placement Guide row> -->
+   <!-- worker_agent_eligible: true | false — rationale: <one line citing § Placement Guide row> -->
    ```
 
 3. Apply § Placement Guide directly:
    - **`true`** for: mappers / scouts (single module, file:line citations), single-concern reviewer trios, verifiers with PASS/FAIL, multi-file synthesis (transcript / session digestion), version / API fact-checks, cross-surface scouts, fully-templated scaffolding (only with explicit `carve_out: true` rationale).
-   - **`false`** for: application code requiring judgment (controllers, models with logic, business rules), tasks that touch money / auth / PII / migrations or any boundary trigger from `tasks-for-sonnet` § 3, sub-5-line tasks the parent should just do, tasks already iterated >2× this session.
+   - **`false`** for: application code requiring judgment (controllers, models with logic, business rules), tasks that touch money / auth / PII / migrations or any boundary trigger from `agent-task-briefs` § 3, sub-5-line tasks the parent should just do, tasks already iterated >2× this session.
 
-4. Append a "Sonnet eligibility table" section to the plan summarizing the tagging:
+4. Append a "Worker-agent eligibility table" section to the plan summarizing the tagging:
 
    ```markdown
-   ## Sonnet eligibility (Phase 2.5)
+   ## Worker-agent eligibility (Phase 2.5)
 
-   | Task | sonnet_eligible | Rationale |
+   | Task | worker_agent_eligible | Rationale |
    |---|---|---|
    | <title> | true \| false | <one line> |
    ```
@@ -240,7 +242,7 @@ Steps:
 
 5. Commit: `git commit -am "docs(plans): $TASK_SLUG — sonnet eligibility tagging"`.
 
-**Boundary safety:** any task that fails the trigger catalog (§ 3) check gets `sonnet_eligible: false` regardless of how mechanical it looks. Plan-review (Phase 4) flags any `true` tagging that touches a boundary trigger.
+**Boundary safety:** any task that fails the trigger catalog (§ 3) check gets `worker_agent_eligible: false` regardless of how mechanical it looks. Plan-review (Phase 4) flags any `true` tagging that touches a boundary trigger.
 
 ### 2.6. Author Validation Contract
 
@@ -297,11 +299,11 @@ Append a **Harness Protocol** section to the plan that lists the sprints and —
 
 ### 4. Plan review — auto-accept recommended options
 
-Invoke `Skill` → `plan-review`. When it asks for decisions, accept **every recommended option** unless it contradicts a documented project rule (CLAUDE.md, `.claude/rules/`). Fold the output back into the plan file.
+Invoke `Skill` → `plan-review`. When it asks for decisions, accept **every recommended option** unless it contradicts documented project instructions (`AGENTS.md`, `CLAUDE.md`, `.claude/rules/`, `.codex/rules/`, or runtime equivalent). Fold the output back into the plan file.
 
 In addition to its standard concerns, `plan-review` MUST critique two surfaces this skill produced earlier:
 
-1. **The Phase 2.5 Sonnet eligibility table.** Flag any `sonnet_eligible: true` task that touches a boundary trigger from `tasks-for-sonnet` § 3 (client-trust boundary, schema bounds, state/enum drift, provider reliability, PII/privacy, partial-vs-final lifecycle, live runtime path) or any money / auth / migration / >5-file scope. Re-tag those `false` per the recommendation before committing.
+1. **The Phase 2.5 Worker-agent eligibility table.** Flag any `worker_agent_eligible: true` task that touches a boundary trigger from `agent-task-briefs` § 3 (client-trust boundary, schema bounds, state/enum drift, provider reliability, PII/privacy, partial-vs-final lifecycle, live runtime path) or any money / auth / migration / >5-file scope. Re-tag those `false` per the recommendation before committing.
 
 2. **The Phase 2.6 Validation Contract.** Apply the rules in `harness-protocol` § Validation Contract. Block the plan if any of:
    - A `Vn` is not in one of the three accepted shapes (HTTP / DB-state / UI selector).
@@ -358,9 +360,9 @@ for line in sys.stdin:
 
 ### 7. Validate + apply Codex plan findings (parallel fan-out) — **skip if `CODEX_OK=no`**
 
-Before fanning out, invoke `Skill` → `tasks-for-sonnet` to load § Dispatch Hygiene and the Scout Swarm pattern. Each `Explore` validator is a Sonnet scout and MUST be shaped accordingly:
+Before fanning out, invoke `Skill` → `agent-task-briefs` to load § Dispatch Hygiene and the Scout Swarm pattern. Each `Explore` validator is a worker model scout and MUST be shaped accordingly:
 
-- Explicit `model: sonnet` on the dispatch — never inherited.
+- Explicit `model: sonnet` or the runtime equivalent on the dispatch — never inherited.
 - Pinned commit hash (`git rev-parse HEAD`) and absolute paths in the prompt.
 - Fresh-context opener: *"You do NOT know the parent's intent. Read the plan and the cited evidence cold. Find whether THIS finding is real, not whether the plan is good overall."*
 - Word cap (default 600).
@@ -385,24 +387,24 @@ Use `superpowers:executing-plans` as playbook and `superpowers:subagent-driven-d
 
 This is what makes the Auditor's score mechanical (Vn → file:line → score) instead of judgment-heavy.
 
-**Sonnet brief contract (Developer + Verifier).** Before dispatching any sub-agent that will run on Sonnet, invoke `Skill` → `tasks-for-sonnet` and shape the brief per § Dispatch Hygiene + § Task Template. Specifically:
+**Worker-agent brief contract (Developer + Verifier).** Before dispatching any sub-agent that will run on worker model, invoke `Skill` → `agent-task-briefs` and shape the brief per § Dispatch Hygiene + § Task Template. Specifically:
 
-- **Developer (`sonnet_eligible: true`):** copy the task's "What Must Be True / Known Constraints / Mechanical Verification" sections from the plan into the brief verbatim. Include `validates: [Vn...]` and the relevant `Vn` rows from the contract — the Developer must write tests that exercise each claimed `Vn`. Pin the commit hash. State the word cap. Pass `model: sonnet` explicitly. For any boundary-touching task, the brief must cite the relevant § 3 trigger or state "no trigger applies" with a one-line reason.
-- **Developer (`sonnet_eligible: false`):** route to Opus per the existing decision rule (E2E-mandatory / >5 files / money / auth / migration). The plan's marker is the source of truth; the rule above is the fallback when no marker exists.
-- **Verifier (always Sonnet):** brief MUST include fresh-context opener, pinned commit hash, the structured PASS/FAIL JSON shape from `harness-protocol` (with `criterion_id` = `Vn`), per-`Vn` `coverage_map: [{criterion_id, test_file:line}]` requirement, and explicit `model: sonnet`. Verifier verdict is FAIL if any claimed `Vn` lacks a covering test.
+- **Developer (`worker_agent_eligible: true`):** copy the task's "What Must Be True / Known Constraints / Mechanical Verification" sections from the plan into the brief verbatim. Include `validates: [Vn...]` and the relevant `Vn` rows from the contract — the Developer must write tests that exercise each claimed `Vn`. Pin the commit hash. State the word cap. Pass `model: sonnet` or the runtime equivalent explicitly. For any boundary-touching task, the brief must cite the relevant § 3 trigger or state "no trigger applies" with a one-line reason.
+- **Developer (`worker_agent_eligible: false`):** route to brain model per the existing decision rule (E2E-mandatory / >5 files / money / auth / migration). The plan's marker is the source of truth; the rule above is the fallback when no marker exists.
+- **Verifier (always worker model):** brief MUST include fresh-context opener, pinned commit hash, the structured PASS/FAIL JSON shape from `harness-protocol` (with `criterion_id` = `Vn`), per-`Vn` `coverage_map: [{criterion_id, test_file:line}]` requirement, and explicit `model: sonnet` or the runtime equivalent. Verifier verdict is FAIL if any claimed `Vn` lacks a covering test.
 
-**Auditor brief = `harness-protocol/references/auditor-prompt.md` + filled-in inputs.** Do NOT inline the Auditor prompt at this dispatch site. Read the reference file, fill in `PINNED_COMMIT`, `PLAN_PATH`, `SPRINT`, `SPRINT_DIFF_RANGE`, `TASK_VALIDATES`, `VALIDATION_CONTRACT`, and pass the whole as the brief. The Auditor itself runs on Opus — verdict and 0–10 scoring per `Vn` are non-negotiable. The Opus Auditor MAY dispatch Sonnet sub-scouts for purely **mechanical sub-tasks**:
+**Auditor brief = `harness-protocol/references/auditor-prompt.md` + filled-in inputs.** Do NOT inline the Auditor prompt at this dispatch site. Read the reference file, fill in `PINNED_COMMIT`, `PLAN_PATH`, `SPRINT`, `SPRINT_DIFF_RANGE`, `TASK_VALIDATES`, `VALIDATION_CONTRACT`, and pass the whole as the brief. The Auditor itself runs on brain model — verdict and 0–10 scoring per `Vn` are non-negotiable. The brain model Auditor MAY dispatch worker model sub-scouts for purely **mechanical sub-tasks**:
 
 - Mapping each `Vn` in `TASK_VALIDATES` to its covering test:line via grep.
-- Enumerating `triggers_satisfied: [{trigger_id, file, line}]` from `tasks-for-sonnet` § 3 against the sprint diff.
+- Enumerating `triggers_satisfied: [{trigger_id, file, line}]` from `agent-task-briefs` § 3 against the sprint diff.
 - Grepping for completeness counts (env-var reads vs `.env.example` entries, `process.env[` reads, etc.).
 
-When the Auditor fans out, each sub-scout brief MUST follow `tasks-for-sonnet` § Dispatch Hygiene: explicit `model: sonnet`, pinned commit, single concern per scout, fresh-context opener, word cap, all dispatches in one message. The Auditor reads the sub-scout outputs and assigns the score itself — sub-scouts return enumerations, not verdicts.
+When the Auditor fans out, each sub-scout brief MUST follow `agent-task-briefs` § Dispatch Hygiene: explicit `model: sonnet` or the runtime equivalent, pinned commit, single concern per scout, fresh-context opener, word cap, all dispatches in one message. The Auditor reads the sub-scout outputs and assigns the score itself — sub-scouts return enumerations, not verdicts.
 
 Parallelism rules inside phase 8:
 - Across sprints → serial.
 - Within a single sprint → roles serial, never parallel.
-- Within a single role, truly independent subtasks → fan out via `superpowers:dispatching-parallel-agents`. Sonnet scouts (Developer subtasks, Verifier subtasks, Auditor sub-scouts) follow `tasks-for-sonnet` Scout Swarm pattern.
+- Within a single role, truly independent subtasks → fan out via `superpowers:dispatching-parallel-agents`. worker model scouts (Developer subtasks, Verifier subtasks, Auditor sub-scouts) follow `agent-task-briefs` Scout Swarm pattern.
 
 If any Auditor `score_0_10 < 9` for a claimed `Vn`, OR `unclaimed_assertions` is non-empty, OR a `severity: "blocker"` finding is returned → loop the sprint with Developer, passing the failing `Vn` IDs + their `evidence: file:line` + reasoning. The sub-agent that failed does NOT also re-evaluate. After Auditor green (every claimed `Vn` ≥9 and `unclaimed_assertions: []`) → commit the sprint.
 
@@ -462,8 +464,8 @@ for line in sys.stdin:
 
 ### 12. Validate + fix real findings (parallel validation, serial fixes) — **skip if `CODEX_OK=no`**
 
-1. Before fan-out, invoke `Skill` → `tasks-for-sonnet` to load § Dispatch Hygiene + Scout Swarm pattern. Then fan out validation with `superpowers:dispatching-parallel-agents` — one Sonnet `Explore` sub-agent per finding (explicit `model: sonnet`, pinned commit hash, fresh-context opener, word cap, single concern per scout, all `Task` calls in one message), returning `{valid, evidence: file:line, fix_approach}`.
-2. **Fixes are serial** (clean commit history, avoid merge conflicts). For each valid finding /go runs the mini-harness: Developer writes failing test first + fix, Verifier runs gates, Auditor confirms resolution. Developer / Verifier / Auditor briefs follow the same Sonnet contract as Phase 8 (tagging + § Dispatch Hygiene). Commit per finding: `fix($TASK_SLUG): <finding>`.
+1. Before fan-out, invoke `Skill` → `agent-task-briefs` to load § Dispatch Hygiene + Scout Swarm pattern. Then fan out validation with `superpowers:dispatching-parallel-agents` — one worker model `Explore` sub-agent per finding (explicit `model: sonnet` or the runtime equivalent, pinned commit hash, fresh-context opener, word cap, single concern per scout, all `Task` calls in one message), returning `{valid, evidence: file:line, fix_approach}`.
+2. **Fixes are serial** (clean commit history, avoid merge conflicts). For each valid finding /go runs the mini-harness: Developer writes failing test first + fix, Verifier runs gates, Auditor confirms resolution. Developer / Verifier / Auditor briefs follow the same worker model contract as Phase 8 (tagging + § Dispatch Hygiene). Commit per finding: `fix($TASK_SLUG): <finding>`.
 3. Invalid findings → "Rejected final-audit findings" section in the plan with one-line reasoning.
 4. If any code changed, re-run the discovered verification gate before declaring done.
 

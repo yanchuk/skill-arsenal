@@ -51,7 +51,7 @@ This doc is the canonical record of what we shipped, what we deferred, and the s
 
 Soft / optional dependencies (unchanged):
 - `codex` CLI — second-opinion auditor at Phase 6 + Phase 11. Skipped cleanly when unavailable.
-- `tasks-for-sonnet` (in this arsenal) — Sonnet placement + brief shaping, already wired.
+- `agent-task-briefs` (in this arsenal) — worker-agent placement + brief shaping, already wired.
 - `plan-review` (in this arsenal) — plan critique at Phase 4.
 - `simplify` — code-deduplication pass at Phase 9.
 
@@ -76,7 +76,7 @@ USER: /go add idle-session timeout to /dashboard
    │
    ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│  Phase 2.5 Sonnet eligibility tagging (per task)                     │
+│  Phase 2.5 Worker-agent eligibility tagging (per task)                     │
 └──────────────────────────────────────────────────────────────────────┘
    │
    ▼
@@ -87,7 +87,7 @@ USER: /go add idle-session timeout to /dashboard
 │              V2: UI     [role=alert] reads "Session expired"         │
 │              V3: STATE  sessions row deleted after 15min idle        │
 │            Annotate every task with  validates: [V1, V2, ...]        │
-│            Append "Sonnet eligibility table" + "Validation Contract" │
+│            Append "Worker-agent eligibility table" + "Validation Contract" │
 └──────────────────────────────────────────────────────────────────────┘
    │
    ▼
@@ -113,7 +113,7 @@ USER: /go add idle-session timeout to /dashboard
 │                                                                      │
 │   per sprint:                                                        │
 │   ┌────────────┐    ┌────────────┐    ┌─────────────────────────┐    │
-│   │ Developer  │ ▶  │  Verifier  │ ▶  │      Auditor (Opus)     │    │
+│   │ Developer  │ ▶  │  Verifier  │ ▶  │   Auditor (brain model) │    │
 │   │ (impl+test)│    │ (PASS/FAIL │    │ scores against Vn list  │    │
 │   │            │    │  evidence) │    │ ┌─────────────────────┐ │    │
 │   └────────────┘    └────────────┘    │ │ score(V1) = 9.2     │ │    │
@@ -257,7 +257,7 @@ Verdict rule: any `Vn` with `score < 9` OR present in `unclaimed_assertions` →
 
 ## Success criterion (the gate that unlocks deferred phases)
 
-Capture a baseline before this PR merges, and a comparable post-merge sample. Each row is one `/go` run inspected from `~/.claude/worktrees/`.
+Capture a baseline before this PR merges, and a comparable post-merge sample. Each row is one `/go` run inspected from `~/.agent-worktrees/`.
 
 | run-slug | (a) sprints needing >1 audit loop | (b) escapes caught only at Phase 11 Codex | (c) post-merge fixes attributable to missed scope | notes |
 |---|---|---|---|---|
@@ -295,7 +295,7 @@ Capture a baseline before this PR merges, and a comparable post-merge sample. Ea
 - `plugins/harness-protocol/skills/harness-protocol/references/auditor-prompt.md` — new
 - `plugins/harness-protocol/skills/harness-protocol/SKILL.md` — Required deps, Validation Contract, Auditor return-contract extension
 - `plugins/harness-protocol/.claude-plugin/plugin.json` — minor bump
-- `plugins/go/skills/go/SKILL.md` — Required deps, Phase 2.6, 16-item TaskCreate list, Phase 4 + Phase 8 brief updates
+- `plugins/go/skills/go/SKILL.md` — Required deps, Phase 2.6, 16-item todo list, Phase 4 + Phase 8 brief updates
 - `plugins/go/.claude-plugin/plugin.json` — minor bump
 - `.claude-plugin/marketplace.json` — both versions in lockstep
 - `docs/design/missions-architecture-mapping.md` — this file

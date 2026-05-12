@@ -1,7 +1,7 @@
 {
   "name": "web-research",
   "description": "Web research methodology with wave-based execution, query strategies, and structured output.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "yanchuk"
   },

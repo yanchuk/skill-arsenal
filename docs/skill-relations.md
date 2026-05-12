@@ -13,6 +13,10 @@ graph TB
     subgraph Standalone["Standalone Skills"]
         WW["writing-well"]
         PR["plan-review"]
+        DA["devil-advocate"]
+        ATB["agent-task-briefs"]
+        TFS["tasks-for-sonnet<br/>(legacy alias)"]
+        RT["retrospective"]
     end
 
     subgraph Domain["Domain Skills"]
@@ -34,6 +38,12 @@ graph TB
     %% Orchestration → other skills
     GO -->|"invokes"| HP
     GO -->|"invokes"| PR
+    GO -->|"brief shaping"| ATB
+    HP -->|"brief shaping"| ATB
+    QK -->|"brief shaping"| ATB
+    RT -->|"promotes findings"| ATB
+    RT -->|"attacks draft"| DA
+    TFS -.->|"legacy alias"| ATB
     QK -.->|"opt-in --review"| PR
     QK -->|"routes to /go on boundary"| GO
 
@@ -61,6 +71,10 @@ graph TB
     style RCG fill:#50c878,stroke:#2e8b57,color:#fff
     style WW fill:#ffa64d,stroke:#cc7a30,color:#fff
     style PR fill:#ffa64d,stroke:#cc7a30,color:#fff
+    style DA fill:#ffa64d,stroke:#cc7a30,color:#fff
+    style ATB fill:#ffa64d,stroke:#cc7a30,color:#fff
+    style TFS fill:#ffa64d,stroke:#cc7a30,color:#fff
+    style RT fill:#ffa64d,stroke:#cc7a30,color:#fff
     style GO fill:#c678dd,stroke:#8e3da8,color:#fff
     style HP fill:#c678dd,stroke:#8e3da8,color:#fff
     style QK fill:#c678dd,stroke:#8e3da8,color:#fff

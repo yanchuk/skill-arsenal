@@ -1,0 +1,37 @@
+{
+  "name": "web-research",
+  "version": "1.0.1",
+  "description": "Web research methodology with wave-based execution, query strategies, and structured output.",
+  "author": {
+    "name": "yanchuk"
+  },
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal",
+  "license": "MIT",
+  "keywords": [
+    "web-research",
+    "search-strategy",
+    "research-methodology",
+    "wave-execution"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "web-research",
+    "shortDescription": "Web research methodology with wave-based execution, query strategies, and structured output.",
+    "longDescription": "Web research methodology with wave-based execution, query strategies, and structured output.",
+    "developerName": "yanchuk",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use the web-research skill."
+    ],
+    "websiteURL": "https://github.com/yanchuk/skill-arsenal",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

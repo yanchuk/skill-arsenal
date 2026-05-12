@@ -9,7 +9,7 @@ description: >
   they want to buy, even if they don't explicitly say "consumer goods."
 compatibility: >
   Full functionality requires MCP web tools (jina, firecrawl, scrapingbee).
-  Degrades gracefully without them. Team orchestration requires Claude Code.
+  Degrades gracefully without them. Team orchestration requires a runtime with subagent or team support.
 ---
 
 # Researching Consumer Goods
@@ -33,7 +33,7 @@ digraph workflow {
   has_items [shape=diamond, label="User already has\nspecific items?"];
   stage2 [label="Stage 2:\nIndustry Research"];
   stage3 [label="Stage 3:\nMarket Search & Pricing"];
-  team_check [shape=diamond, label="Items >= 15 &\ncategories >= 3 &\nClaude Code?"];
+  team_check [shape=diamond, label="Items >= 15 &\ncategories >= 3 &\nSubagents?"];
   parallel [label="Create team\nparallel verify"];
   sequential [label="Sequential verify"];
   stage4 [label="Stage 4:\nReport Generation"];
@@ -154,12 +154,12 @@ Below are domain-specific overrides for consumer goods research.
 | 3 | **ScrapingBee `get_google_search_results`** | PAA reveals related products and comparison queries |
 | 4 | **Firecrawl `firecrawl_search`** | Returns scraped content — useful when search snippets don't show prices |
 
-### 3c. Team Decision (Claude Code only)
+### 3c. Team Decision (subagent-capable runtimes)
 
 If ALL conditions met: items >= 15 AND categories >= 3 AND tool level >= 3:
 - Offer to create a parallel agent team
 - Read `references/team-orchestration.md` for team setup details
-- Structure: Opus leader + N Sonnet workers (1 per category, max 6)
+- Structure: brain-model lead + N worker agents (1 per category, max 6)
 - Each worker gets: item list, geo context, tool fallback chain, credit budget, output path
 
 Otherwise: sequential verification in the current session.
@@ -218,5 +218,5 @@ Additional reporting tasks:
 | No MCP tools available | Output install commands + generate external AI prompt |
 | Sizes not visible (JS-rendered) | Firecrawl(waitFor=2000) or ScrapingBee(render_js=true) |
 | Search returns irrelevant results | Add store domain filter, use product name + model number |
-| Many items, slow progress | Suggest team orchestration (Claude Code) or reduce scope |
+| Many items, slow progress | Suggest team orchestration when the runtime supports it or reduce scope |
 | Price changed since research | Flag in report, note original vs current price |

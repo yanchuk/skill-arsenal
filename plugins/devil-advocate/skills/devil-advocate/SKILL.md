@@ -17,12 +17,12 @@ missed.
 
 ## Independence — honest framing
 
-This skill spawns a sub-agent via `Agent({subagent_type: "general-purpose", ...})`. The sub-agent:
+This skill spawns a fresh-context sub-agent with the runtime's delegation tool. The sub-agent:
 
 - **Gets** a fresh conversation window — no prior turn history from
   the parent, no knowledge of the author's framing or reasoning.
-- **Inherits** (unavoidably, per Claude Code's runtime) CLAUDE.md,
-  `.claude/rules/`, `~/.claude/rules/`, and auto-memory.
+- **Inherits** runtime-provided project instruction files,
+  runtime rules, and auto-memory when the platform injects them.
 
 "Independence" here means: the sub-agent reads the target artifact
 **fresh**, forms its own opinion, and isn't anchored by the parent's
@@ -88,8 +88,7 @@ based on artifact type:
 - **Design docs:** user-flow edge cases, accessibility gaps, failure
   modes, mobile viewport, empty / loading / error states.
 
-Read the target's domain (infer from `.claude/rules/` or CLAUDE.md in
-the same repo) and add 1-2 domain-specific vectors if relevant.
+Read the target's domain from project instructions in the same repo and add 1-2 domain-specific vectors if relevant.
 
 ## Step 3: Compose the adversarial prompt
 
@@ -120,9 +119,7 @@ Read the target in full before responding.
 
 ## Step 4: Spawn the sub-agent
 
-Invoke `Agent()` with the composed prompt. Use `subagent_type:
-"general-purpose"` unless a more specific type fits (e.g.,
-`claude-code-guide` for Claude-Code-mechanics questions).
+Invoke the runtime's subagent tool with the composed prompt. Use a general reviewer agent unless a more specific reviewer is available.
 
 ## Step 5: Present findings
 
@@ -152,10 +149,10 @@ Suggest, not prescribe:
 - Dependency patch bumps.
 - When the last devil-advocate run was in the same session on the
   same artifact and nothing material has changed.
-- Low-stakes work where Codex or `plan-review` is sufficient.
+- Low-stakes work where an independent reviewer or `plan-review` is sufficient.
 
 ## See also
 
 - `skill-arsenal/plugins/plan-review/` — survey-style reviewer (5 dimensions).
-- `skill-arsenal/plugins/go/` — full pipeline, includes Codex (which is an independent-model adversarial reviewer at the code level).
+- `skill-arsenal/plugins/go/` — full pipeline, includes an independent reviewer pass.
 - `skill-arsenal/plugins/retrospective/` — invokes this skill as step 5.

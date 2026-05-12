@@ -1,0 +1,38 @@
+{
+  "name": "devil-advocate",
+  "version": "1.0.1",
+  "description": "Adversarial independent reviewer — spawns a fresh-context sub-agent to attack a plan, PR, design, or RFC. Enforces attack-first stance, severity rubric (blocker / major / minor), concrete-edit requirement, anti-fabrication rule. Distinct from plan-review (which surveys). Use before high-blast-radius changes or when a plan 'feels fine but is important.'",
+  "author": {
+    "name": "yanchuk"
+  },
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal",
+  "license": "MIT",
+  "keywords": [
+    "devil-advocate",
+    "adversarial-review",
+    "independent-review",
+    "plan-review",
+    "risk-assessment"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "devil-advocate",
+    "shortDescription": "Adversarial independent reviewer — spawns a fresh-context sub-agent to attack a plan, PR, design, or RFC. Enforces attack-first stance, severity rubric (blocker / major / minor), concrete-edit requirement, anti-fabrication rule. Distinct from plan-review (which surveys). Use before high-blast-radius changes or when a plan 'feels fine but is important.'",
+    "longDescription": "Adversarial independent reviewer — spawns a fresh-context sub-agent to attack a plan, PR, design, or RFC. Enforces attack-first stance, severity rubric (blocker / major / minor), concrete-edit requirement, anti-fabrication rule. Distinct from plan-review (which surveys). Use before high-blast-radius changes or when a plan 'feels fine but is important.'",
+    "developerName": "yanchuk",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use the devil-advocate skill."
+    ],
+    "websiteURL": "https://github.com/yanchuk/skill-arsenal",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

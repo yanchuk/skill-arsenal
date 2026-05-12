@@ -90,12 +90,12 @@ Otherwise, `"FAIL"`.
 - **Don't praise.** No "great work" / "looks good" filler. The return contract is your full output.
 - **Don't grade `Vn` not in `TASK_VALIDATES`.** Those belong to other sprints.
 
-## Mechanical sub-scout fan-out (Opus Auditor only)
+## Mechanical sub-scout fan-out (brain model Auditor only)
 
-The Auditor itself runs on Opus — verdict and 0–10 scoring are non-negotiable. The Opus Auditor MAY dispatch Sonnet sub-scouts in parallel for purely **mechanical** sub-tasks:
+The Auditor itself runs on brain model — verdict and 0–10 scoring are non-negotiable. The brain model Auditor MAY dispatch worker-model sub-scouts in parallel for purely **mechanical** sub-tasks:
 
 - Mapping each `Vn` in `TASK_VALIDATES` to its covering test path:line via grep.
-- Enumerating `triggers_satisfied: [{trigger_id, file, line}]` from `tasks-for-sonnet` § 3 against the sprint diff.
+- Enumerating `triggers_satisfied: [{trigger_id, file, line}]` from `agent-task-briefs` § 3 against the sprint diff.
 - Counting completeness (env-var reads vs `.env.example` entries; `process.env[` reads).
 
-Each sub-scout brief follows `tasks-for-sonnet` § Dispatch Hygiene: explicit `model: sonnet`, pinned commit, single concern, fresh-context opener, word cap ≤600. The Opus Auditor reads sub-scout outputs and assigns the score itself — sub-scouts return enumerations, never verdicts.
+Each sub-scout brief follows `agent-task-briefs` § Dispatch Hygiene: explicit `model: sonnet` or the runtime equivalent, pinned commit, single concern, fresh-context opener, word cap ≤600. The brain model Auditor reads sub-scout outputs and assigns the score itself — sub-scouts return enumerations, never verdicts.

@@ -15,7 +15,7 @@ description: >
 
 Run a small change end-to-end on the **current branch**, with the same plan + critique + subagent-driven execution as `/go` but without the harness, the worktree, the Validation Contract, or the sprint loop. A typo, a single-component change, a doc update, a single route addition without auth — anything you'd otherwise hand to one developer for a half-day.
 
-If the input is sprawling, money-touching, auth-touching, migration-touching, or hits a `tasks-for-sonnet` § 3 boundary trigger, `/quick` aborts at Phase 3 and tells you to re-run with `/go`. There is no silent graduation — this prevents `/quick` from becoming a worse `/go`.
+If the input is sprawling, money-touching, auth-touching, migration-touching, or hits a `agent-task-briefs` § 3 boundary trigger, `/quick` aborts at Phase 3 and tells you to re-run with `/go`. There is no silent graduation — this prevents `/quick` from becoming a worse `/go`.
 
 ## Required dependencies
 
@@ -32,7 +32,7 @@ Phase 1 probes for each via the `Skill` tool. On any miss → abort with the ins
 
 ## Dependencies (other skills invoked)
 
-- `tasks-for-sonnet` — required (this arsenal). Phase 3 invokes it for § Placement Guide, § Task Template, and the § 3 trigger catalog. The plan is **mutated in place** with Sonnet briefs after this phase.
+- `agent-task-briefs` — required (this arsenal). Phase 3 invokes it for § Placement Guide, § Task Template, and the § 3 trigger catalog. The plan is **mutated in place** with Worker-agent briefs after this phase.
 - `plan-review` — optional (this arsenal). Skipped by default for speed; invoke explicitly with `/quick --review` if you want it.
 - `codex` — optional. Same probe + 90s-silence watchdog as `/go`. Skipped cleanly when CLI unavailable.
 
@@ -43,7 +43,7 @@ Phase 1 probes for each via the `Skill` tool. On any miss → abort with the ins
 | 1-3 files | >5 files |
 | Single module / component | Cross-module |
 | No money / auth / state migration | Money / auth / migration |
-| No `tasks-for-sonnet` § 3 trigger fires | Any § 3 trigger fires |
+| No `agent-task-briefs` § 3 trigger fires | Any § 3 trigger fires |
 | You don't want a worktree | You want isolation |
 | Half-day or less | Multi-day, multi-sprint |
 
@@ -61,7 +61,7 @@ If you're unsure, start with `/quick`. Phase 3 will route you to `/go` if the br
 
 `/quick` only needs one fact from the project: the verification-gate command. Discover it in the same order as `/go`:
 
-1. `.claude/rules/testing-gates.md` — if present, follow verbatim.
+1. `.claude/rules/testing-gates.md`, `.codex/rules/testing-gates.md`, or an equivalent runtime rule — if present, follow verbatim.
 2. `package.json` scripts — `verify`, `verify:wave`, `ci`, `check`, `test:all`, `precommit`. Use the most comprehensive.
 3. `Makefile` — `make verify`, `make ci`, `make check`, `make test`.
 4. Language defaults — `pnpm test && pnpm run typecheck`, `uv run pytest && uv run mypy`, `cargo test`, `go test ./...`.
@@ -70,13 +70,13 @@ Cache to `.context/quick-env.json`. If none resolve, ask the user once.
 
 ## Execution sequence
 
-Materialize all six phases as TaskCreate todos so the user can watch progress.
+Create visible todos for all six phases so the user can watch progress.
 
-The six TaskCreate items (use these labels verbatim):
+The six todo items (use these labels verbatim):
 
 1. Phase 1 — superpowers probe + project discovery + Codex readiness probe
 2. Phase 2 — writing-plans skill pass (small-task plan)
-3. Phase 3 — tasks-for-sonnet placement + in-place plan shaping (or abort to /go)
+3. Phase 3 — agent-task-briefs placement + in-place plan shaping (or abort to /go)
 4. Phase 4 — Codex plan review (skip if unavailable)
 5. Phase 5 — subagent-driven-development execution
 6. Phase 6 — Done — print summary
@@ -107,13 +107,13 @@ If the plan comes back with >5 tasks or any single task spanning >2 files, this 
 
 Otherwise commit: `git commit -am "docs(plans): <slug> — initial plan"`.
 
-### 3. tasks-for-sonnet — placement + in-place plan shaping
+### 3. agent-task-briefs — placement + in-place plan shaping
 
-This is the phase that turns a free-text plan into an execution-ready plan. **Do not skip.** Without this, Phase 5 has no model assignment per task and no shaped brief for Sonnet tasks.
+This is the phase that turns a free-text plan into an execution-ready plan. **Do not skip.** Without this, Phase 5 has no model assignment per task and no shaped brief for worker-agent tasks.
 
 Steps:
 
-1. Invoke `Skill` → `tasks-for-sonnet` to load § Placement Guide, § Task Template, and § 3 trigger catalog.
+1. Invoke `Skill` → `agent-task-briefs` to load § Placement Guide, § Task Template, and § 3 trigger catalog.
 
 2. **Walk every task in the plan.** For each task:
 
@@ -126,8 +126,8 @@ Steps:
 
    - **NO** → continue.
 
-   **b. Apply § Placement Guide.** Decide `placement: main | sonnet`:
-   - `sonnet` for: mappers / scouts / single-concern reviewer trios / verifiers with PASS/FAIL / multi-file synthesis / version + API fact-checks / fully-templated scaffolding.
+   **b. Apply § Placement Guide.** Decide `placement: main | worker`:
+   - `worker` for: mappers / scouts / single-concern reviewer trios / verifiers with PASS/FAIL / multi-file synthesis / version + API fact-checks / fully-templated scaffolding.
    - `main` for: tasks requiring judgment, tasks already iterated >2× this session, sub-5-line work.
 
    **c. Mutate the plan in place.**
@@ -139,18 +139,18 @@ Steps:
      <!-- placement: main -->
      ```
 
-   - For `placement: sonnet`: rewrite the task body per § Task Template. The plan IS the brief — Phase 5 dispatches by reading these sections verbatim.
+   - For `placement: worker`: rewrite the task body per § Task Template. The plan IS the brief — Phase 5 dispatches by reading these sections verbatim.
 
      ```markdown
      ### Task N: <title>
-     <!-- placement: sonnet -->
+     <!-- placement: worker -->
 
      **What Must Be True (invariants):**
      - <invariant 1>
      - <invariant 2>
 
      **Known Constraints:**
-     - <constraint 1> [tasks-for-sonnet § 3: <trigger_id> if any applies; else "no trigger applies"]
+     - <constraint 1> [agent-task-briefs § 3: <trigger_id> if any applies; else "no trigger applies"]
 
      **Mechanical Verification:**
      - <command or assertion that confirms the task is done>
@@ -168,22 +168,22 @@ Steps:
 
    | Task | Placement | Why |
    |------|-----------|-----|
-   | <title> | main \| sonnet | <one line citing § Placement Guide row> |
+   | <title> | main \| worker | <one line citing § Placement Guide row> |
    ```
 
-4. Commit: `git commit -am "docs(plans): <slug> — placement + sonnet briefs"`.
+4. Commit: `git commit -am "docs(plans): <slug> — placement + worker briefs"`.
 
 **Why mutate in place:** the plan after Phase 3 is the canonical execution artifact. Phase 5's subagent dispatch reads `<!-- placement: ... -->` to pick model, and reads the "What Must Be True / Known Constraints / Mechanical Verification" sections verbatim to build the brief. No second-pass shaping at dispatch time. No drift between "the plan" and "the brief."
 
 ### 4. Codex plan review — skip if `CODEX_OK=no`
 
-Same execution mechanics as `/go` Phase 6 (background Bash + 90s-silence watchdog; do NOT use the foreground 120s default). Codex sees the plan **after Phase 3 mutation** so it can critique the Sonnet briefs as well as the plan structure.
+Same execution mechanics as `/go` Phase 6 (background Bash + 90s-silence watchdog; do NOT use the foreground 120s default). Codex sees the plan **after Phase 3 mutation** so it can critique the Worker-agent briefs as well as the plan structure.
 
 ```bash
 TMPERR=$(mktemp)
 codex exec "Critically review $PLAN. \
-Pay attention to: (a) does each Sonnet task have invariants concrete enough \
-that a junior agent can verify mechanically? (b) is any task mis-placed (Sonnet \
+Pay attention to: (a) does each worker-agent task have invariants concrete enough \
+that a junior agent can verify mechanically? (b) is any task mis-placed (worker model \
 when it needs judgment, or Main when it's mechanical)? (c) edge cases the plan \
 misses. \
 IMPORTANT: Do NOT read or execute any files under ~/.claude/, ~/.agents/, \
@@ -214,7 +214,7 @@ Invoke `Skill` → `superpowers:subagent-driven-development`. That skill already
 3. Code-quality reviewer subagent (fresh context) confirms quality. Loops if not.
 4. Final code review (`superpowers:requesting-code-review`) on the cumulative diff after all tasks.
 
-`/quick`'s only addition: when the implementer is dispatched on a `placement: sonnet` task, pass `model: sonnet` explicitly and copy the task's "What Must Be True / Known Constraints / Mechanical Verification" sections from the plan into the brief verbatim. For `placement: main`, dispatch with the parent's model (Opus).
+`/quick`'s only addition: when the implementer is dispatched on a `placement: worker` task, pass the runtime's worker-model selector explicitly and copy the task's "What Must Be True / Known Constraints / Mechanical Verification" sections from the plan into the brief verbatim. For `placement: main`, dispatch with the parent model. Legacy `placement: sonnet` markers may be accepted as input and normalized to `worker`; never emit them in new plans.
 
 After the final code-review pass passes, run the discovered verification gate one more time. Must be green.
 
@@ -243,6 +243,6 @@ After the final code-review pass passes, run the discovered verification gate on
 
 ## Failure modes
 
-- If `tasks-for-sonnet` is not loadable → abort. Phase 3 cannot run without it; the plan would never get shaped for Sonnet dispatch and Phase 5 would dispatch with the wrong model.
+- If `agent-task-briefs` is not loadable → abort. Phase 3 cannot run without it; the plan would never get shaped for worker model dispatch and Phase 5 would dispatch with the wrong model.
 - If Phase 5 produces a diff that touches files outside what the plan declared → it's a sign the task was mis-scoped. Roll back the offending commit, surface to user.
 - If Codex review suggests this should be sprinted → take it seriously; offer the user the option to abort and re-run with `/go`.

@@ -1,0 +1,38 @@
+{
+  "name": "agent-task-briefs",
+  "version": "1.0.0",
+  "description": "Invariant-first task briefs for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
+  "author": {
+    "name": "Yanchuk"
+  },
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "subagents",
+    "task-briefs",
+    "verification",
+    "orchestration"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "agent-task-briefs",
+    "shortDescription": "Invariant-first task briefs for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
+    "longDescription": "Invariant-first task briefs for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
+    "developerName": "Yanchuk",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use the agent-task-briefs skill."
+    ],
+    "websiteURL": "https://github.com/yanchuk/skill-arsenal",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "retrospective",
+  "version": "1.0.1",
+  "description": "Structured project retrospective — mines sessions, audits git + plans, cross-checks epistemic layers, spawns devil-advocate, emits a dated retro plan. Project-agnostic — walks up from $PWD to discover the project root. Use when the user says /retrospective, retro, or asks for a look-back on the last N days.",
+  "author": {
+    "name": "yanchuk"
+  },
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal",
+  "license": "MIT",
+  "keywords": [
+    "retrospective",
+    "retro",
+    "audit",
+    "session-mining",
+    "devil-advocate",
+    "orchestration"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "retrospective",
+    "shortDescription": "Structured project retrospective — mines sessions, audits git + plans, cross-checks epistemic layers, spawns devil-advocate, emits a dated retro plan. Project-agnostic — walks up from $PWD to discover the project root. Use when the user says /retrospective, retro, or asks for a look-back on the last N days.",
+    "longDescription": "Structured project retrospective — mines sessions, audits git + plans, cross-checks epistemic layers, spawns devil-advocate, emits a dated retro plan. Project-agnostic — walks up from $PWD to discover the project root. Use when the user says /retrospective, retro, or asks for a look-back on the last N days.",
+    "developerName": "yanchuk",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use the retrospective skill."
+    ],
+    "websiteURL": "https://github.com/yanchuk/skill-arsenal",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

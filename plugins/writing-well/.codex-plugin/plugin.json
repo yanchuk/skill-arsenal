@@ -1,0 +1,37 @@
+{
+  "name": "writing-well",
+  "version": "1.0.0",
+  "description": "Applies Zinsser's nonfiction writing principles — simplicity, clarity, active voice, clutter elimination — to any text.",
+  "author": {
+    "name": "yanchuk"
+  },
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal",
+  "license": "MIT",
+  "keywords": [
+    "writing",
+    "editing",
+    "copywriting",
+    "clarity"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "writing-well",
+    "shortDescription": "Applies Zinsser's nonfiction writing principles — simplicity, clarity, active voice, clutter elimination — to any text.",
+    "longDescription": "Applies Zinsser's nonfiction writing principles — simplicity, clarity, active voice, clutter elimination — to any text.",
+    "developerName": "yanchuk",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use the writing-well skill."
+    ],
+    "websiteURL": "https://github.com/yanchuk/skill-arsenal",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

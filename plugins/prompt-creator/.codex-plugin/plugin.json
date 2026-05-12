@@ -1,0 +1,38 @@
+{
+  "name": "prompt-creator",
+  "version": "1.0.0",
+  "description": "Prompt engineering best practices from Anthropic and OpenAI docs. Crafts effective prompts for any LLM.",
+  "author": {
+    "name": "yanchuk"
+  },
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal",
+  "license": "MIT",
+  "keywords": [
+    "prompt-engineering",
+    "llm-prompts",
+    "claude-prompts",
+    "openai-prompts",
+    "system-prompts"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "prompt-creator",
+    "shortDescription": "Prompt engineering best practices from Anthropic and OpenAI docs. Crafts effective prompts for any LLM.",
+    "longDescription": "Prompt engineering best practices from Anthropic and OpenAI docs. Crafts effective prompts for any LLM.",
+    "developerName": "yanchuk",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use the prompt-creator skill."
+    ],
+    "websiteURL": "https://github.com/yanchuk/skill-arsenal",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

@@ -1,6 +1,6 @@
 # Team Orchestration
 
-Guide for creating parallel agent teams in Claude Code to verify large item sets across multiple categories. Only applicable in Claude Code with team capabilities.
+Guide for creating parallel agent teams in a subagent-capable runtime to verify large item sets across multiple categories. Only applicable in a subagent-capable runtime with team capabilities.
 
 ---
 
@@ -10,7 +10,7 @@ All conditions must be met:
 - **Items >= 15** across all categories
 - **Categories >= 3** distinct product categories
 - **Tool level >= 3** (Jina + at least Firecrawl or ScrapingBee)
-- **Running in Claude Code** with access to TeamCreate, TaskCreate, Task tools
+- **Running in a subagent-capable runtime** with access to the runtime's team or subagent tools
 
 If any condition is not met, use sequential verification in the current session instead.
 
@@ -19,64 +19,52 @@ If any condition is not met, use sequential verification in the current session 
 ## Team Structure
 
 ```
-Opus Leader (you)
-├── Sonnet Worker 1 — Category A
-├── Sonnet Worker 2 — Category B
-├── Sonnet Worker 3 — Category C
-├── Sonnet Worker 4 — Category D
-├── Sonnet Worker 5 — Category E
-└── Sonnet Worker 6 — Category F
+Brain-model lead (you)
+├── Worker agent 1 — Category A
+├── Worker agent 2 — Category B
+├── Worker agent 3 — Category C
+├── Worker agent 4 — Category D
+├── Worker agent 5 — Category E
+└── Worker agent 6 — Category F
 ```
 
 - **Max 6 workers** — one per category
-- **Workers use Sonnet** (model="sonnet") for cost efficiency
-- **Leader uses Opus** for compilation and quality control
+- **Workers use a lower-cost model** when the runtime supports model selection
+- **Lead uses the strongest available model** for compilation and quality control
 - If fewer than 3 categories, don't create a team — run sequentially
 
 ---
 
 ## Team Lifecycle
 
-### 1. Create Team
+### 1. Create Team Or Work Group
 
-```python
-TeamCreate(
-    team_name="consumer-research",
-    description="Parallel consumer goods verification"
-)
+```text
+Create a work group named "consumer-research" for parallel consumer goods
+verification.
 ```
 
 ### 2. Create Tasks (one per category)
 
-```python
+```text
 for category in categories:
-    TaskCreate(
-        subject=f"Verify {category} items",
-        description=f"Verify {len(items)} {category} items for availability and pricing in {country}",
-        activeForm=f"Verifying {category}"
-    )
+    create a visible task:
+      subject: "Verify {category} items"
+      description: "Verify {count} {category} items for availability and pricing in {country}"
 ```
 
 ### 3. Spawn Workers (parallel)
 
 Spawn all workers in a single message for maximum parallelism:
 
-```python
+```text
 for category in categories:
-    Task(
-        name=f"{category}-researcher",
-        subagent_type="general-purpose",
-        model="sonnet",
-        team_name="consumer-research",
-        prompt=WORKER_PROMPT.format(
-            category=category,
-            items=items_for_category,
-            geo_context=geo_context,
-            tool_chain=tool_chain,
-            credit_budget=per_agent_budget,
-            output_path=f"{output_dir}/verify-{category}.md"
-        )
-    )
+    spawn a worker agent with:
+      name: "{category}-researcher"
+      model: "<worker-model>" when supported
+      group: "consumer-research"
+      prompt: WORKER_PROMPT with category, items, geo context,
+              tool chain, credit budget, and output path
 ```
 
 ### 4. Monitor Progress

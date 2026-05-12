@@ -1,0 +1,37 @@
+{
+  "name": "competitor-research",
+  "version": "1.0.0",
+  "description": "Research competitors by gathering and analyzing community feedback from Reddit, forums, and review sites.",
+  "author": {
+    "name": "yanchuk"
+  },
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal",
+  "license": "MIT",
+  "keywords": [
+    "competitor-research",
+    "competitive-intelligence",
+    "reddit-analysis",
+    "community-feedback"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "competitor-research",
+    "shortDescription": "Research competitors by gathering and analyzing community feedback from Reddit, forums, and review sites.",
+    "longDescription": "Research competitors by gathering and analyzing community feedback from Reddit, forums, and review sites.",
+    "developerName": "yanchuk",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use the competitor-research skill."
+    ],
+    "websiteURL": "https://github.com/yanchuk/skill-arsenal",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

@@ -12,7 +12,7 @@ description: >
 
 ## Why This Skill Exists
 
-Research methodology (wave strategy, query generation, debugging heuristics) is reusable across projects. Packaging it as a skill makes it available to any Claude Code session, not just a single repo's agent. The research execution pattern, output format, and quality assurance steps are domain-independent.
+Research methodology (wave strategy, query generation, debugging heuristics) is reusable across projects. Packaging it as a skill makes it available to any agent session, not just a single repo's setup. The research execution pattern, output format, and quality assurance steps are domain-independent.
 
 ---
 
@@ -173,4 +173,4 @@ Structure research findings as:
 
 ## Model Recommendation
 
-Research is tool-call heavy, not reasoning-heavy. When spawning research agents, `model: sonnet` is the right default — it handles search/read loops efficiently at lower cost. Opus adds cost without improving search/read quality. Use Opus only if the synthesis step requires deep domain reasoning (e.g., comparing complex architectural trade-offs).
+Research is tool-call heavy, not reasoning-heavy. When spawning research agents, use the runtime's lower-cost worker model for search/read loops. Use the strongest available model only when synthesis needs deep domain reasoning, such as complex architectural trade-offs.

@@ -1,0 +1,39 @@
+{
+  "name": "go",
+  "version": "1.2.2",
+  "description": "End-to-end feature pipeline: plan → Validation Contract → harness protocol → plan-review → independent audit → execute → simplify → final audit. Runs inside an isolated git worktree. Hard dependency on obra/superpowers. Project-agnostic.",
+  "author": {
+    "name": "yanchuk"
+  },
+  "homepage": "https://github.com/yanchuk/skill-arsenal",
+  "repository": "https://github.com/yanchuk/skill-arsenal",
+  "license": "MIT",
+  "keywords": [
+    "pipeline",
+    "orchestrator",
+    "harness",
+    "codex",
+    "worktree",
+    "end-to-end"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "go",
+    "shortDescription": "End-to-end feature pipeline: plan → Validation Contract → harness protocol → plan-review → independent audit → execute → simplify → final audit. Runs inside an isolated git worktree. Hard dependency on obra/superpowers. Project-agnostic.",
+    "longDescription": "End-to-end feature pipeline: plan → Validation Contract → harness protocol → plan-review → independent audit → execute → simplify → final audit. Runs inside an isolated git worktree. Hard dependency on obra/superpowers. Project-agnostic.",
+    "developerName": "yanchuk",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use the go skill."
+    ],
+    "websiteURL": "https://github.com/yanchuk/skill-arsenal",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

@@ -11,9 +11,9 @@ Tone: concrete, structured, direct. Cite file:line for every finding.
 
 Three canonical documents define correctness:
 
-1. `CLAUDE.md` — conventions, naming, architecture rules
+1. Project instruction files (`CLAUDE.md`, `AGENTS.md`, or runtime equivalent) — conventions, naming, architecture rules
 2. `docs/skill-relations.md` — dependency graph contract
-3. `.claude-plugin/marketplace.json` — plugin registry
+3. `.claude-plugin/marketplace.json` and `.agents/plugins/marketplace.json` — plugin registries
 
 Everything else is unknown until verified against these.
 
@@ -26,7 +26,7 @@ You own: the accuracy of the dependency graph audit, the convention compliance a
 ### Critical (blocks plugin loading or breaks functionality)
 
 1. **Frontmatter completeness** — every SKILL.md has `name` (required), `description` as `>` multiline YAML string (required), trigger phrases at the end of description
-2. **Marketplace sync** — every `plugins/<name>/` dir registered in marketplace.json; `name` matches across marketplace.json, plugin.json, SKILL.md
+2. **Marketplace sync** — every `plugins/<name>/` dir registered in both marketplace files; `name` matches across marketplace, plugin manifests, and SKILL.md
 3. **Reference file existence** — every `references/X.md` link in a SKILL.md points to a file that exists
 4. **Symlink validity** — `skills/<name>` symlink resolves to `plugins/<name>/skills/<name>/`
 
@@ -44,8 +44,8 @@ You own: the accuracy of the dependency graph audit, the convention compliance a
 
 ## Execution
 
-- **Wave 1:** Read CLAUDE.md, skill-relations.md, marketplace.json
-- **Wave 2:** Read all 8 SKILL.md files in parallel
+- **Wave 1:** Read project instructions, skill-relations.md, and both marketplace files
+- **Wave 2:** Read all SKILL.md files in parallel
 - **Wave 3:** Cross-reference — check each dimension against each skill
 - **Wave 4:** Synthesize per-skill issues + executive summary
 

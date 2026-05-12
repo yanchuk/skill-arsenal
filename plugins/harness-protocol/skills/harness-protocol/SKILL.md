@@ -78,8 +78,8 @@ The **Orchestrator → Generator → Evaluator** pattern. The main conversation 
 ## Per-Sprint Execution Sequence
 
 ### Phase A — Implementation
-1. Orchestrator creates sprint tasks with acceptance criteria. **When the implementer is a junior agent (Sonnet, Haiku, etc.), shape every task per the `tasks-for-sonnet` skill** — invariant-first ("What Must Be True"), known constraints with trigger citations from that skill's § 3, and mechanical verification. Implied taste does not survive the handoff.
-2. Spawn **Developer agent** with full context (files, plan section, patterns). For boundary-touching work (server routes, schemas, external provider calls, analytics, file uploads, auth), the Developer's prompt MUST include explicit absolute paths to read `tasks-for-sonnet/SKILL.md` — sub-agents do NOT auto-inherit project rules.
+1. Orchestrator creates sprint tasks with acceptance criteria. **When the implementer is a junior agent (a worker model or junior agent), shape every task per the `agent-task-briefs` skill** — invariant-first ("What Must Be True"), known constraints with trigger citations from that skill's § 3, and mechanical verification. Implied taste does not survive the handoff.
+2. Spawn **Developer agent** with full context (files, plan section, patterns). For boundary-touching work (server routes, schemas, external provider calls, analytics, file uploads, auth), the Developer's prompt MUST include explicit absolute paths to read `agent-task-briefs/SKILL.md` — sub-agents do NOT auto-inherit project rules.
 3. Developer implements, writes tests, runs the project's automated gates (see below).
 
 ### Phase B — Verification
@@ -93,7 +93,7 @@ The **Orchestrator → Generator → Evaluator** pattern. The main conversation 
 ### Phase D — Audit
 8. Spawn **Auditor agent** (completely fresh, skeptical prompt — e.g., `feature-dev:code-reviewer` or `superpowers:requesting-code-review`).
 9. Auditor grades each criterion 1-10 with file:line evidence.
-10. **For boundary-touching diffs**, the Auditor MUST also enumerate `triggers_satisfied: [{trigger_id, file, line}]` for every trigger in `tasks-for-sonnet/SKILL.md` § 3 that applies to the diff. Empty enumeration on a boundary diff is an audit failure — either the auditor didn't check or the implementer didn't apply.
+10. **For boundary-touching diffs**, the Auditor MUST also enumerate `triggers_satisfied: [{trigger_id, file, line}]` for every trigger in `agent-task-briefs/SKILL.md` § 3 that applies to the diff. Empty enumeration on a boundary diff is an audit failure — either the auditor didn't check or the implementer didn't apply.
 11. If any criterion <9/10 → Developer fixes → Auditor re-grades → loop.
 
 ### Phase E — Sign-off
@@ -107,7 +107,7 @@ The **Orchestrator → Generator → Evaluator** pattern. The main conversation 
 
 Before any evaluator runs, all of the project's automated gates MUST pass. Detect the project's gate script, in this order:
 
-1. **`.claude/rules/testing-gates.md`** — if present, follow it verbatim (project-specific paths, commands, E2E-mandatory list).
+1. **Runtime testing gate rules** — if `.claude/rules/testing-gates.md`, `.codex/rules/testing-gates.md`, or an equivalent runtime rule exists, follow it verbatim (project-specific paths, commands, E2E-mandatory list).
 2. **`package.json` scripts** — look for `verify`, `verify:wave`, `ci`, `check`, `test:all`, `precommit`. Use the most comprehensive one.
 3. **`Makefile`** targets — `make verify`, `make ci`, `make check`, `make test`.
 4. **Language defaults** — fall back to: `pnpm test && pnpm run typecheck && pnpm build` (Node), `uv run pytest && uv run mypy` (Python), `cargo test && cargo clippy` (Rust), `go test ./... && go vet ./...` (Go).
@@ -116,7 +116,7 @@ If none resolve, stop and ask the user for the verification command. **Do not in
 
 ## E2E coverage
 
-If the project has a `.claude/rules/testing-gates.md` listing E2E-mandatory paths, diff-changed files that intersect that list trigger a mandatory E2E run before audit. Otherwise require E2E for any user-facing route or money/state transition the sprint touched.
+If the project has `.claude/rules/testing-gates.md`, `.codex/rules/testing-gates.md`, or an equivalent runtime rule listing E2E-mandatory paths, diff-changed files that intersect that list trigger a mandatory E2E run before audit. Otherwise require E2E for any user-facing route or money/state transition the sprint touched.
 
 ## Independent Auditor Principles
 
