@@ -62,6 +62,16 @@ cmd /c mklink /J "$env:USERPROFILE\.agents\skills\skill-arsenal" "$env:USERPROFI
 
 `tasks-for-sonnet` is a legacy alias. Use `agent-task-briefs` for new work.
 
+## Subagents
+
+Use `agent-task-briefs` before spawning Codex subagents. It decides whether work
+belongs in the parent model, `worker`, `explorer`, or a custom agent. Use
+`harness-protocol` when a task needs Developer -> Verifier -> Auditor gates.
+
+For bounded implementation tasks, a custom `.codex/agents/*.toml` worker can
+set a smaller model such as `gpt-5.3-codex-spark`. Keep architecture decisions,
+security-sensitive changes, and final sign-off in the strongest parent model.
+
 ## Troubleshooting
 
 ```bash

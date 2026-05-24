@@ -66,8 +66,8 @@
     },
     {
       "name": "harness-protocol",
-      "description": "Orchestrator → Developer → Verifier → Auditor harness for multi-sprint / multi-file work. Generator never self-evaluates. >9/10 per-criterion threshold. Auditor scores against typed Vn assertions from a Validation Contract authored before any code. Hard dependency on obra/superpowers. Project-agnostic.",
-      "version": "1.1.2",
+      "description": "Runtime-neutral Orchestrator → Developer → Verifier → Auditor harness for multi-sprint / multi-file work. Supports Claude/Superpowers and Codex subagent adapters. Generator never self-evaluates; Auditor scores against typed Vn assertions from a Validation Contract authored before any code. Project-agnostic.",
+      "version": "1.2.0",
       "source": "./plugins/harness-protocol",
       "strict": true
     },
@@ -87,8 +87,8 @@
     },
     {
       "name": "agent-task-briefs",
-      "description": "Invariant-first task briefs for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
-      "version": "1.0.0",
+      "description": "Invariant-first task briefs and runtime model-lane guidance for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
+      "version": "1.1.0",
       "source": "./plugins/agent-task-briefs",
       "strict": true
     },
@@ -101,15 +101,15 @@
     },
     {
       "name": "retrospective",
-      "description": "Structured project retrospective — mines sessions, audits git + plans, cross-checks epistemic layers, spawns devil-advocate, emits a dated retro plan. Project-agnostic — walks up from $PWD to discover the project root. Use when the user says /retrospective, retro, or asks for a look-back on the last N days.",
-      "version": "1.0.1",
+      "description": "Structured project retrospective — mines agent sessions, audits git + plans, cross-checks epistemic layers, and can identify repeated workflows worth packaging as skills, custom agents, or automations. Claude/Codex-friendly and project-agnostic. Use for /retrospective, retro, look-backs, or workflow-packaging requests.",
+      "version": "1.1.0",
       "source": "./plugins/retrospective",
       "strict": true
     },
     {
       "name": "tasks-for-sonnet",
       "description": "Compatibility alias for agent-task-briefs. Resolves legacy tasks-for-sonnet triggers, Sonnet handoffs, and sonnet_eligible markers.",
-      "version": "1.3.0",
+      "version": "1.4.0",
       "source": "./plugins/tasks-for-sonnet",
       "strict": true
     }

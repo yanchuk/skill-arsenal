@@ -1,7 +1,7 @@
 {
   "name": "agent-task-briefs",
-  "version": "1.0.0",
-  "description": "Invariant-first task briefs for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
+  "version": "1.1.0",
+  "description": "Invariant-first task briefs and runtime model-lane guidance for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
   "author": {
     "name": "Yanchuk"
   },
@@ -18,8 +18,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "agent-task-briefs",
-    "shortDescription": "Invariant-first task briefs for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
-    "longDescription": "Invariant-first task briefs for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
+    "shortDescription": "Invariant-first task briefs and runtime model-lane guidance for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
+    "longDescription": "Invariant-first task briefs and runtime model-lane guidance for worker agents, scouts, reviewers, and verifier subagents. Project-agnostic.",
     "developerName": "Yanchuk",
     "category": "Coding",
     "capabilities": [

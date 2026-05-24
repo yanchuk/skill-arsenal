@@ -4,7 +4,8 @@ description: >
   Use before delegating work to a subagent, worker model, scout, verifier,
   reviewer, or junior implementation agent; when writing task briefs,
   acceptance criteria, harness sprint plans, or agent handoffs; when deciding
-  whether delegated execution is appropriate; or when reviewer findings show
+  whether delegated execution is appropriate; when assigning model lanes for
+  Codex, Claude, OpenCode, or another runtime; or when reviewer findings show
   that prior agent briefs missed concrete invariants.
 ---
 
@@ -14,6 +15,49 @@ Use this skill to turn intent into tasks a fresh worker agent can execute and
 a fresh verifier can judge. It is provider-neutral: Claude Code, Codex,
 OpenCode, and other agent runtimes are adapters. The task contract is the
 same everywhere.
+
+## Runtime Model Lanes
+
+The parent agent owns model assignment before dispatch. Pick the smallest
+runtime lane that can satisfy the invariant, then make the lane explicit in
+the brief.
+
+| Lane | Use for | Examples |
+|------|---------|----------|
+| **Brain** | architecture, product judgment, ambiguous tradeoffs, final sign-off | strongest available parent model, senior human |
+| **Worker** | scoped implementation after invariants, files, and tests are specified | Codex `worker`, Claude Sonnet, OpenCode worker |
+| **Scout** | read-heavy mapping, single-concern review, version/API checks, synthesis | Codex `explorer`, Claude Explore/general-purpose |
+| **Specialist** | browser debugging, docs research, security review, migration audit | named custom agent with constrained tools |
+
+Do not equate "junior" with "bad." A smaller worker model is useful when the
+task is bounded and mechanically verifiable. Use the strongest model only when
+the task still needs judgment.
+
+### Codex Adapter
+
+Codex supports built-in subagents (`default`, `worker`, `explorer`) and custom
+agents under `~/.codex/agents/` or `.codex/agents/`. Custom agents can set
+`model`, `model_reasoning_effort`, `sandbox_mode`, MCP servers, and skill
+config. This lets a plan send scout or small implementation work to a cheaper
+model while keeping judgment-heavy work in the parent.
+
+Example Codex custom agent for a bounded worker:
+
+```toml
+name = "spark_worker"
+description = "Small implementation worker for bounded tasks with explicit files and tests."
+model = "gpt-5.3-codex-spark"
+model_reasoning_effort = "medium"
+developer_instructions = """
+Implement only the assigned task.
+Keep unrelated files untouched.
+Return files changed, tests run, and any blocker.
+"""
+```
+
+Use Codex subagents only when explicitly asked or when the plan authorizes
+delegation. Keep `agents.max_depth` shallow unless recursive delegation is a
+deliberate design choice.
 
 ## Core Rule
 
@@ -69,7 +113,7 @@ Accept legacy `sonnet_eligible: true | false` markers during the
 
 Before spawning a worker agent, verify the brief has:
 
-- explicit runtime target when the platform supports it (`model`, `subagent_type`, or equivalent);
+- explicit runtime target when the platform supports it (`model`, `subagent_type`, custom-agent name, or equivalent);
 - a word cap, usually 400-600 words for scouts and reviewers;
 - a fresh-context opener for reviewers: "You do not know the parent's intent. Read the target cold. Find blockers, not praise.";
 - pinned commit hash or absolute file paths for verification;
@@ -77,8 +121,8 @@ Before spawning a worker agent, verify the brief has:
 - all parallel, independent reviews launched together;
 - no repeated retry unless the previous result was read and the prompt changed.
 
-Use model names only as examples. "Sonnet", "Haiku", "GPT", or "Codex" are
-runtime choices, not the skill's domain model.
+Use model names only as examples. "Sonnet", "Haiku", "GPT", "Spark", or
+"Codex" are runtime choices, not the skill's domain model.
 
 ## Task Template
 
