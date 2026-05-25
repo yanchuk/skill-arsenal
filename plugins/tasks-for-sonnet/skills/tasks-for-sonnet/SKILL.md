@@ -26,6 +26,11 @@ canonical source of truth when available. If `agent-task-briefs` is not
 installed, use the compatibility brief rules below so single-plugin legacy
 installs still behave safely.
 
+For Codex, treat old "Sonnet" wording as "worker-agent lane." Use
+`agent-task-briefs` § Runtime Model Lanes to decide whether a task belongs in
+the parent model, `worker`, `explorer`, or a custom agent such as a bounded
+`gpt-5.3-codex-spark` worker.
+
 Treat these legacy terms as aliases:
 
 | Legacy term | Canonical term |

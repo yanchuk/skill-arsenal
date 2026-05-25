@@ -1,20 +1,32 @@
 ---
 name: harness-protocol
 description: >
-  Use when coordinating a sprinted implementation across sub-agents and you
-  need quality gates that can't be talked out of — task spans multiple
-  sprints, waves, or >5 files. Trigger phrases: "run the harness", "use
-  the protocol", "quality-gated build", "sprinted implementation", "hard
-  quality gate". Project-agnostic.
+  Use when coordinating a sprinted implementation across subagents or worker
+  models and you need quality gates that can't be talked out of — task spans
+  multiple sprints, waves, or >5 files. Supports Claude/Superpowers and Codex
+  subagent adapters. Trigger phrases: "run the harness", "use the protocol",
+  "quality-gated build", "sprinted implementation", "hard quality gate".
+  Project-agnostic.
 ---
 
 # Harness-Orchestrated Development
 
 **Use this for any task spanning multiple sprints, waves, or >5 files.**
 
-## Required dependencies
+## Runtime adapters
 
-This skill expects [`obra/superpowers`](https://github.com/obra/superpowers) to be installed and loaded in the same environment. The following skills are invoked by name and MUST resolve:
+This protocol is runtime-neutral. Claude Code, Codex, OpenCode, and other
+agent harnesses are adapters that provide the same roles: Orchestrator,
+Developer, Verifier, and Auditor.
+
+Use the strongest available parent model for orchestration and judgment. Use
+smaller worker models only when `agent-task-briefs` says the task is bounded,
+invariant-first, and mechanically verifiable.
+
+### Claude Code / Superpowers adapter
+
+When [`obra/superpowers`](https://github.com/obra/superpowers) is installed,
+invoke these skills by name if they resolve:
 
 - `superpowers:writing-plans`
 - `superpowers:subagent-driven-development` (Developer + Verifier briefs read from its `implementer-prompt.md` / `spec-reviewer-prompt.md` references)
@@ -23,7 +35,26 @@ This skill expects [`obra/superpowers`](https://github.com/obra/superpowers) to 
 - `superpowers:requesting-code-review` (used by the Auditor)
 - `superpowers:verification-before-completion`
 
-If any are missing, the orchestrator (`/go` Phase 1, or any caller of this skill) MUST refuse to run with a one-line install hint pointing at https://github.com/obra/superpowers — do NOT silently degrade. References by skill name (`superpowers:<name>`), never by file path, to survive upstream restructures.
+If a caller explicitly selected the Superpowers adapter and these are missing,
+stop with a one-line install hint. Do not silently pretend the adapter exists.
+
+### Codex adapter
+
+Codex supports built-in subagents (`default`, `worker`, `explorer`) and custom
+agents in `~/.codex/agents/` or `.codex/agents/`. Use Codex agents like this:
+
+- **Orchestrator:** parent Codex session, strongest available model.
+- **Developer:** `worker` or a custom implementation agent. A small model such
+  as `gpt-5.3-codex-spark` is appropriate only for bounded tasks with explicit
+  files, tests, and invariants.
+- **Verifier:** read-only custom agent when possible; PASS/FAIL only.
+- **Auditor:** reviewer custom agent, preferably read-only and stronger than
+  the Developer when correctness, security, or migrations are involved.
+- **Scout:** `explorer` or a read-only custom agent for mapping and evidence.
+
+Custom Codex agents can set `model`, `model_reasoning_effort`, `sandbox_mode`,
+MCP servers, and skill config. Keep nested delegation shallow; recursive fan-out
+adds cost and makes results harder to reason about.
 
 The **Orchestrator → Generator → Evaluator** pattern. The main conversation is the orchestrator — it NEVER implements features or evaluates its own work.
 
@@ -91,7 +122,7 @@ The **Orchestrator → Generator → Evaluator** pattern. The main conversation 
 7. Loop until all PASS
 
 ### Phase D — Audit
-8. Spawn **Auditor agent** (completely fresh, skeptical prompt — e.g., `feature-dev:code-reviewer` or `superpowers:requesting-code-review`).
+8. Spawn **Auditor agent** (completely fresh, skeptical prompt — e.g., a Codex reviewer custom agent, `feature-dev:code-reviewer`, or `superpowers:requesting-code-review`).
 9. Auditor grades each criterion 1-10 with file:line evidence.
 10. **For boundary-touching diffs**, the Auditor MUST also enumerate `triggers_satisfied: [{trigger_id, file, line}]` for every trigger in `agent-task-briefs/SKILL.md` § 3 that applies to the diff. Empty enumeration on a boundary diff is an audit failure — either the auditor didn't check or the implementer didn't apply.
 11. If any criterion <9/10 → Developer fixes → Auditor re-grades → loop.
@@ -120,7 +151,7 @@ If the project has `.claude/rules/testing-gates.md`, `.codex/rules/testing-gates
 
 ## Independent Auditor Principles
 
-The auditor (spawned fresh, ideally as `feature-dev:code-reviewer` or an equivalent reviewer agent) must be **skeptical by default**:
+The auditor (spawned fresh, ideally as a dedicated reviewer custom agent, `feature-dev:code-reviewer`, or an equivalent review skill) must be **skeptical by default**:
 
 1. **Self-evaluation is unreliable.** Never let the generator evaluate its own output.
 2. **Skepticism must be explicitly prompted.** Auditor prompt: *"You are a skeptical reviewer. Your job is to find problems, not praise. If unsure whether something is a bug, treat it as a bug. Never talk yourself out of a finding."*
@@ -131,7 +162,7 @@ The auditor (spawned fresh, ideally as `feature-dev:code-reviewer` or an equival
 7. **Separation is the mechanism.** A standalone evaluator being skeptical is far more tractable than making a generator critical of its own work.
 8. **Calibrate through iteration.** If the auditor is too lenient, tighten the prompt next time.
 
-## Sprint Execution (when paired with `/writing-plans` + `/executing-plans`)
+## Sprint Execution (when paired with a plan runner)
 
 Every task follows:
 1. **Plan** — define scope, dependencies, acceptance criteria

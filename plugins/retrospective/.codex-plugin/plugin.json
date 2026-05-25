@@ -1,7 +1,7 @@
 {
   "name": "retrospective",
-  "version": "1.0.1",
-  "description": "Structured project retrospective — mines sessions, audits git + plans, cross-checks epistemic layers, spawns devil-advocate, emits a dated retro plan. Project-agnostic — walks up from $PWD to discover the project root. Use when the user says /retrospective, retro, or asks for a look-back on the last N days.",
+  "version": "1.1.0",
+  "description": "Structured project retrospective — mines agent sessions, audits git + plans, cross-checks epistemic layers, and can identify repeated workflows worth packaging as skills, custom agents, or automations. Claude/Codex-friendly and project-agnostic. Use for /retrospective, retro, look-backs, or workflow-packaging requests.",
   "author": {
     "name": "yanchuk"
   },
@@ -19,8 +19,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "retrospective",
-    "shortDescription": "Structured project retrospective — mines sessions, audits git + plans, cross-checks epistemic layers, spawns devil-advocate, emits a dated retro plan. Project-agnostic — walks up from $PWD to discover the project root. Use when the user says /retrospective, retro, or asks for a look-back on the last N days.",
-    "longDescription": "Structured project retrospective — mines sessions, audits git + plans, cross-checks epistemic layers, spawns devil-advocate, emits a dated retro plan. Project-agnostic — walks up from $PWD to discover the project root. Use when the user says /retrospective, retro, or asks for a look-back on the last N days.",
+    "shortDescription": "Structured project retrospective — mines agent sessions, audits git + plans, cross-checks epistemic layers, and can identify repeated workflows worth packaging as skills, custom agents, or automations. Claude/Codex-friendly and project-agnostic. Use for /retrospective, retro, look-backs, or workflow-packaging requests.",
+    "longDescription": "Structured project retrospective — mines agent sessions, audits git + plans, cross-checks epistemic layers, and can identify repeated workflows worth packaging as skills, custom agents, or automations. Claude/Codex-friendly and project-agnostic. Use for /retrospective, retro, look-backs, or workflow-packaging requests.",
     "developerName": "yanchuk",
     "category": "Coding",
     "capabilities": [

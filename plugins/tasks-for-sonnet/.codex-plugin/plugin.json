@@ -1,6 +1,6 @@
 {
   "name": "tasks-for-sonnet",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Compatibility alias for agent-task-briefs. Resolves legacy tasks-for-sonnet triggers, Sonnet handoffs, and sonnet_eligible markers.",
   "author": {
     "name": "yanchuk"

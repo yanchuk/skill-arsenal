@@ -37,12 +37,12 @@ other agents are runtime adapters.
 
 | Skill | Use |
 |-------|-----|
-| **agent-task-briefs** | Write invariant-first briefs for worker agents, scouts, reviewers, and verifiers. |
+| **agent-task-briefs** | Write invariant-first briefs and model-lane decisions for workers, scouts, reviewers, and verifiers. |
 | **tasks-for-sonnet** | Compatibility alias for older plans that still reference Sonnet-specific wording. |
-| **harness-protocol** | Run Developer -> Verifier -> Auditor gates for multi-sprint work. |
+| **harness-protocol** | Run Developer -> Verifier -> Auditor gates for Claude/Superpowers or Codex subagents. |
 | **go** | Full feature pipeline: plan, review, execute, verify, simplify, and audit. |
 | **quick** | Smaller 1-3 file pipeline without a worktree or full harness. |
-| **retrospective** | Review recent project work and turn misses into process updates. |
+| **retrospective** | Review recent work, turn misses into process updates, and spot workflows worth packaging. |
 
 ## How It Fits Together
 
@@ -172,7 +172,9 @@ When changing a skill, bump both plugin manifests and both marketplace entries.
 ## Compatibility
 
 `tasks-for-sonnet` remains as a legacy alias for one release. New plans and
-skills should use `agent-task-briefs`.
+skills should use `agent-task-briefs`. In Codex, old Sonnet wording maps to the
+worker-agent lane; bounded tasks can use `worker`, `explorer`, or a custom
+`.codex/agents/*.toml` agent such as a `gpt-5.3-codex-spark` worker.
 
 ## Credits
 
