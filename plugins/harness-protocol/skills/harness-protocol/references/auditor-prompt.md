@@ -35,6 +35,24 @@ The Validation Contract is the source of truth. Each `Vn` is one of:
 5. **Score against evidence, not intent.** If the diff lacks a test for `Vn`, score it ≤4 even if the production code "looks like it would handle that case." A `Vn` is not satisfied until a test exercises it.
 6. **Probe edge cases** the diff would miss: empty input, invalid input, unauthorized caller, race conditions on shared rows, partial state on provider timeout, unicode/locale, money/state cleanup. List each as a `blocking_finding` if the relevant `Vn` doesn't cover it.
 
+## Required acceptance dimensions for UI + API + persistence features
+
+When the diff touches **all three** of (a) UI surface, (b) API route, (c) data persistence layer, the Auditor MUST enumerate evidence for each of the dimensions below. Each unmet dimension is a `blocking_finding`. These were extracted from real reviewer catches across multiple projects where the in-loop harness returned ≥9 but an external reviewer found the bag of missing tests.
+
+| Dimension | What it means | What evidence looks like |
+|-----------|---------------|--------------------------|
+| **D1. Happy-path E2E** | A test exercising the canonical user journey end-to-end. | One E2E spec or integration test, cited as `path:line`. |
+| **D2. Error-state E2E** | A test exercising at least one failure path the user sees: network 5xx, validation 4xx, auth fail. | One spec asserting the UI's failure-state rendering. |
+| **D3. Edge-case input** | A test at the boundary of accepted input: unicode at the length boundary (surrogate pairs at slice points), oversized payload, malformed locale, empty string vs absent. | One unit or route test per relevant boundary. |
+| **D4. Persistence-reload** | A test that reloads or re-fetches and confirms the stored state survives. Catches client-side state pretending to be persistence. | One spec that performs a write, reloads, asserts presence. |
+| **D5. State-machine bounds** | If the diff state-changes a finite-state object (call, wallet, verification), the route handler must declare the set of valid prior states explicitly and reject others deterministically. | The route source enumerates valid prior states OR a test asserts each invalid prior state is rejected. |
+| **D6. Provider-input boundary** | If the diff parses an externally-reachable request body (`request.formData()`, `request.json()`), the handler must require `Content-Length`, enforce a project max, and sanitize known provider fields. | A `MAX_BODY_BYTES` constant + `Content-Length` check + per-field sanitization. |
+| **D7. Auth boundary** | Non-GET route handlers (`POST`/`PUT`/`PATCH`/`DELETE`) must use the project's strong authentication helper (CSRF + email-verification + risk-state), not a read-only session-loader. | Diff or a static check shows the strong helper is invoked at the top of every write handler. |
+
+These dimensions are **not** a substitute for `Vn` scoring; they layer on top. A `Vn` is only score-9 if it's covered by a test that *itself* covers the relevant dimensions. A diff that has a happy-path test (D1) but no error-state coverage (D2) cannot get `score_0_10 = 9` on a `Vn` that says "user sees the result," because the user also sees errors and the diff didn't prove that path.
+
+When the diff is **not** a UI+API+persistence triple (e.g., a pure refactor, a docs change, a CLI tool), skip the dimensions that don't apply and say so in the report.
+
 ## Scoring rubric
 
 | Score | Meaning |
