@@ -104,16 +104,14 @@ Restart Codex after installing or updating skills.
 
 ### Other agents
 
-Clone the repo and let the agent wire the skills in:
+Any agent that can read a Git repo can install these itself — just ask it in
+plain language:
 
-```bash
-git clone https://github.com/yanchuk/skill-arsenal.git
-```
+> ❯ Install the skills from github.com/yanchuk/skill-arsenal and use
+> web-research to investigate this topic following best practices.
 
-Then prompt your agent: *"Explore `skills/` in this repo and install each skill
-into your skills directory."* Every skill is a self-contained
-`skills/<name>/SKILL.md` — copy or symlink the ones you want into wherever your
-runtime discovers skills.
+The agent clones the repo, reads the self-contained `skills/<name>/SKILL.md`
+files, and wires the ones it needs into wherever your runtime discovers skills.
 
 ## Repository Layout
 
