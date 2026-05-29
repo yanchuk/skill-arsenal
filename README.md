@@ -2,8 +2,8 @@
 
 Agent-agnostic skills for research, writing, review, and orchestration.
 
-Skills describe reusable workflows. Claude Code, Codex, OpenCode, Cursor, and
-other agents are runtime adapters.
+Skills describe reusable workflows. Claude Code, Codex, and other agents are
+runtime adapters.
 
 **Fast install:** `npx skills add yanchuk/skill-arsenal`
 
