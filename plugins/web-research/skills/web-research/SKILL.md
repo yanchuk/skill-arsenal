@@ -171,6 +171,15 @@ Structure research findings as:
 
 ---
 
-## Model Recommendation
+## Model Tiering (when dispatched to sub-agents)
 
-Research is tool-call heavy, not reasoning-heavy. When spawning research agents, use the runtime's lower-cost worker model for search/read loops. Use the strongest available model only when synthesis needs deep domain reasoning, such as complex architectural trade-offs.
+Research is tool-call heavy, not reasoning-heavy. When this skill runs across sub-agents, split work by tier instead of running every agent on the most capable — and most expensive — model. The fan-out is mechanical; paying top-tier rates for it is the costliest, lowest-leverage choice.
+
+| Wave / role | Tier | Why |
+|-------------|------|-----|
+| **Wave 1–2** — search + read fan-out | **worker model** | Issuing queries, fetching URLs, extracting text. No deep judgment; a brain-tier model here buys nothing and costs the most. |
+| **Wave 3–4** — analyze, cross-verify, synthesize | **brain model** | Reconciling conflicting sources, weighing credibility, resolving contradictions, writing the report — the one step that benefits from top-tier reasoning. Tier down only when findings are simple and non-conflicting. |
+
+"Worker" and "brain" are runtime lanes, not specific models — the harness maps them to whatever it has (e.g. worker → Sonnet or a Codex worker; brain → Opus or the strongest parent model). Model names here are examples only. See `agent-task-briefs` § Runtime Model Lanes for the canonical lane definitions.
+
+**Manual override:** the caller picks the tier per dispatch (pass `model:` / `subagent_type:` or the runtime equivalent). Default to the worker model for the search/read fan-out; promote a verify/synthesis agent to the brain model when the topic involves conflicting expert claims or high-stakes trade-offs.

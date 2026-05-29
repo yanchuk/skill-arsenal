@@ -32,7 +32,7 @@
     {
       "name": "web-research",
       "description": "Web research methodology with wave-based execution, query strategies, and structured output.",
-      "version": "1.0.1",
+      "version": "1.1.0",
       "source": "./plugins/web-research",
       "strict": true
     },
