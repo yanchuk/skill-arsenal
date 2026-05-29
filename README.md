@@ -96,44 +96,24 @@ npx skills add yanchuk/skill-arsenal
 
 ### Codex
 
-Direct skill discovery is the recommended Codex path:
-
-```bash
-if [ -d ~/.agents/skill-arsenal ]; then
-  git -C ~/.agents/skill-arsenal pull
-else
-  git clone https://github.com/yanchuk/skill-arsenal.git ~/.agents/skill-arsenal
-fi
-
-mkdir -p ~/.agents/skills
-rm -rf ~/.agents/skills/skill-arsenal
-ln -s ~/.agents/skill-arsenal/skills ~/.agents/skills/skill-arsenal
-find -L ~/.agents/skills/skill-arsenal -maxdepth 2 -name SKILL.md | sort
-```
-
-Codex-native plugin metadata is included for runtimes that support plugin
-marketplaces:
-
 ```bash
 codex plugin marketplace add yanchuk/skill-arsenal --sparse .agents/plugins
 ```
 
 Restart Codex after installing or updating skills.
 
-### OpenCode
+### Other agents
+
+Clone the repo and let the agent wire the skills in:
 
 ```bash
-git clone https://github.com/yanchuk/skill-arsenal.git ~/.config/opencode/skill-arsenal
-mkdir -p ~/.config/opencode/skills
-ln -s ~/.config/opencode/skill-arsenal/skills ~/.config/opencode/skills/skill-arsenal
+git clone https://github.com/yanchuk/skill-arsenal.git
 ```
 
-Restart OpenCode after installing or updating skills.
-
-### Manual
-
-Copy or symlink any directory under `skills/` into your agent's skills
-directory.
+Then prompt your agent: *"Explore `skills/` in this repo and install each skill
+into your skills directory."* Every skill is a self-contained
+`skills/<name>/SKILL.md` — copy or symlink the ones you want into wherever your
+runtime discovers skills.
 
 ## Repository Layout
 
