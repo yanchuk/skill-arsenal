@@ -25,13 +25,39 @@ the brief.
 | Lane | Use for | Examples |
 |------|---------|----------|
 | **Brain** | architecture, product judgment, ambiguous tradeoffs, final sign-off | strongest available parent model, senior human |
-| **Worker** | scoped implementation after invariants, files, and tests are specified | Codex `worker`, Claude Sonnet, OpenCode worker |
+| **Worker** | scoped implementation after invariants, files, and tests are specified | Codex `worker`, Claude Sonnet 5, OpenCode worker |
 | **Scout** | read-heavy mapping, single-concern review, version/API checks, synthesis | Codex `explorer`, Claude Explore/general-purpose |
 | **Specialist** | browser debugging, docs research, security review, migration audit | named custom agent with constrained tools |
 
 Do not equate "junior" with "bad." A smaller worker model is useful when the
 task is bounded and mechanically verifiable. Use the strongest model only when
 the task still needs judgment.
+
+### Worker Capability Is Rising
+
+Worker-lane models keep closing on the Brain lane: a current worker model
+(e.g. Claude Sonnet 5) can self-check its own output and finish multi-step
+tool-and-coding tasks where earlier worker models would halt, at lower cost and
+often with an effort/reasoning-effort control that trades cost for depth. That
+shifts three placement decisions — and the shift holds for any worker model at
+this tier, not a named one:
+
+- **Widen the Worker lane; keep the contract.** More multi-step, self-checking,
+  agentic implementation is now worker-eligible — but self-checking is not a
+  substitute for a falsifiable acceptance criterion. You still cannot read
+  intent out of a passing self-check, so invariant-first briefs and mechanical
+  verification still decide placement.
+- **Match the effort dial to the bound, not the model tier.** When the runtime
+  exposes an effort or reasoning-effort control (e.g. Codex
+  `model_reasoning_effort`, per-model effort levels), set it from the task's
+  bound — low for mechanical scaffolding, higher for ambiguous edges — before
+  reaching for a larger model.
+- **Strong-at-general is not strong-at-everything.** A worker model can match a
+  flagship model on everyday coding yet stay materially weaker on a specialized
+  high-stakes lane — dangerous-capability and security-exploit work is a known
+  gap. Keep security review, migration audits, and similar specialist work in
+  the Brain or Specialist lane even when the worker is strong at day-to-day
+  implementation.
 
 ### Codex Adapter
 
