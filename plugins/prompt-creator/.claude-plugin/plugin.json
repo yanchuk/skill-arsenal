@@ -1,7 +1,7 @@
 {
   "name": "prompt-creator",
   "description": "Prompt engineering best practices from Anthropic and OpenAI docs. Crafts effective prompts for any LLM.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "yanchuk"
   },

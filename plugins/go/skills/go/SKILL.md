@@ -360,7 +360,7 @@ for line in sys.stdin:
 
 ### 7. Validate + apply Codex plan findings (parallel fan-out) — **skip if `CODEX_OK=no`**
 
-Before fanning out, invoke `Skill` → `agent-task-briefs` to load § Dispatch Hygiene and the Scout Swarm pattern. Each `Explore` validator is a worker model scout and MUST be shaped accordingly:
+Before fanning out, invoke `Skill` → `agent-task-briefs` to load § Dispatch Hygiene. Each `Explore` validator is a worker model scout and MUST be shaped accordingly:
 
 - Explicit `model: sonnet` or the runtime equivalent on the dispatch — never inherited.
 - Pinned commit hash (`git rev-parse HEAD`) and absolute paths in the prompt.
@@ -404,7 +404,7 @@ When the Auditor fans out, each sub-scout brief MUST follow `agent-task-briefs` 
 Parallelism rules inside phase 8:
 - Across sprints → serial.
 - Within a single sprint → roles serial, never parallel.
-- Within a single role, truly independent subtasks → fan out via `superpowers:dispatching-parallel-agents`. worker model scouts (Developer subtasks, Verifier subtasks, Auditor sub-scouts) follow `agent-task-briefs` Scout Swarm pattern.
+- Within a single role, truly independent subtasks → fan out via `superpowers:dispatching-parallel-agents`. worker model scouts (Developer subtasks, Verifier subtasks, Auditor sub-scouts) follow `agent-task-briefs` § Dispatch Hygiene.
 
 If any Auditor `score_0_10 < 9` for a claimed `Vn`, OR `unclaimed_assertions` is non-empty, OR a `severity: "blocker"` finding is returned → loop the sprint with Developer, passing the failing `Vn` IDs + their `evidence: file:line` + reasoning. The sub-agent that failed does NOT also re-evaluate. After Auditor green (every claimed `Vn` ≥9 and `unclaimed_assertions: []`) → commit the sprint.
 
@@ -464,7 +464,7 @@ for line in sys.stdin:
 
 ### 12. Validate + fix real findings (parallel validation, serial fixes) — **skip if `CODEX_OK=no`**
 
-1. Before fan-out, invoke `Skill` → `agent-task-briefs` to load § Dispatch Hygiene + Scout Swarm pattern. Then fan out validation with `superpowers:dispatching-parallel-agents` — one worker model `Explore` sub-agent per finding (explicit `model: sonnet` or the runtime equivalent, pinned commit hash, fresh-context opener, word cap, single concern per scout, all `Task` calls in one message), returning `{valid, evidence: file:line, fix_approach}`.
+1. Before fan-out, invoke `Skill` → `agent-task-briefs` to load § Dispatch Hygiene. Then fan out validation with `superpowers:dispatching-parallel-agents` — one worker model `Explore` sub-agent per finding (explicit `model: sonnet` or the runtime equivalent, pinned commit hash, fresh-context opener, word cap, single concern per scout, all `Task` calls in one message), returning `{valid, evidence: file:line, fix_approach}`.
 2. **Fixes are serial** (clean commit history, avoid merge conflicts). For each valid finding /go runs the mini-harness: Developer writes failing test first + fix, Verifier runs gates, Auditor confirms resolution. Developer / Verifier / Auditor briefs follow the same worker model contract as Phase 8 (tagging + § Dispatch Hygiene). Commit per finding: `fix($TASK_SLUG): <finding>`.
 3. Invalid findings → "Rejected final-audit findings" section in the plan with one-line reasoning.
 4. If any code changed, re-run the discovered verification gate before declaring done.

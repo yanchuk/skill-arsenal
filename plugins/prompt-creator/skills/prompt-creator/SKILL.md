@@ -130,7 +130,7 @@ assistant message (for few-shot):
 - **Adaptive thinking** — For complex reasoning tasks, Claude uses extended thinking automatically; structure prompts to encourage step-by-step reasoning
 - **Thinking tags in examples** — Include `<thinking>` blocks in few-shot examples; Claude generalizes the reasoning pattern, not just the output format
 - **Multishot with thinking:** When available for your domain, show examples with `<thinking>` blocks demonstrating the reasoning process before the answer *(See: technique-catalog.md → #9 Thinking Blocks in Examples)*
-- **Prefill technique** — Start the assistant response to steer output format (e.g., prefill with `{` for JSON, or `<analysis>` for structured output)
+- **Structured outputs for machine-read results** — When code parses the reply, use structured outputs (`output_config.format` with a JSON schema) instead of format instructions alone. Current Claude models reject assistant prefill with a 400 error, so don't start the assistant turn to force a format
 - **Chain prompts for complex tasks** — Break multi-step tasks into separate prompts rather than one mega-prompt; pass outputs forward
 
 ### OpenAI

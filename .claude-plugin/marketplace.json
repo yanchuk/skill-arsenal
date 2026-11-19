@@ -18,7 +18,7 @@
     {
       "name": "prompt-creator",
       "description": "Prompt engineering best practices from Anthropic and OpenAI docs. Crafts effective prompts for any LLM.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "source": "./plugins/prompt-creator",
       "strict": true
     },
@@ -67,14 +67,14 @@
     {
       "name": "harness-protocol",
       "description": "Runtime-neutral Orchestrator → Developer → Verifier → Auditor harness for multi-sprint / multi-file work. Supports Claude/Superpowers and Codex subagent adapters. Generator never self-evaluates; Auditor scores against typed Vn assertions from a Validation Contract authored before any code. Project-agnostic.",
-      "version": "1.2.0",
+      "version": "1.3.0",
       "source": "./plugins/harness-protocol",
       "strict": true
     },
     {
       "name": "go",
       "description": "End-to-end feature pipeline: plan → Validation Contract → harness protocol → plan-review → independent audit → execute → simplify → final audit. Runs inside an isolated git worktree. Hard dependency on obra/superpowers. Project-agnostic.",
-      "version": "1.2.2",
+      "version": "1.2.3",
       "source": "./plugins/go",
       "strict": true
     },
