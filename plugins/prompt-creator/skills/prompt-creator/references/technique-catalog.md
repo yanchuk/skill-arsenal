@@ -116,7 +116,7 @@ Any changes must be backward-compatible with API v2 clients.
 
 The model continues from "1." — guaranteeing a numbered list format.
 
-**Compatibility:** Claude (native support via assistant prefill). OpenAI (use system message to instruct format). Not available in most chat UIs.
+**Compatibility:** Older Claude models only. Current Claude models (Opus 4.6 and later, Sonnet 4.6 and later, Haiku 5.5, Fable) reject a trailing assistant prefill with a 400 error; use structured outputs (`output_config.format`) or a format instruction instead. OpenAI: use a system message to instruct format. Not available in most chat UIs.
 
 ---
 
@@ -235,7 +235,7 @@ Return results as a JSON array. Each object must have exactly these fields:
 Do not include any text outside the JSON array.
 ```
 
-**Compatibility:** All models. OpenAI has native `response_format` with JSON Schema enforcement. Claude works reliably with explicit format instructions + prefill.
+**Compatibility:** All models. For schema enforcement, OpenAI has `response_format` with JSON Schema and Claude has structured outputs (`output_config.format`). Don't rely on prefill for Claude: current models reject it.
 
 ---
 

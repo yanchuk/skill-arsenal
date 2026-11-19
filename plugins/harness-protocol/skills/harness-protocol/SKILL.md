@@ -94,12 +94,12 @@ The **Orchestrator → Generator → Evaluator** pattern. The main conversation 
 | **Orchestrator** (main) | Creates tasks, spawns agents, reads reports, decides go/no-go | Implements features, evaluates its own decisions |
 | **Developer** (generator) | Implements features, writes tests (unit + E2E where applicable), fixes bugs | Evaluates its own work quality |
 | **Verifier** (evaluator #1) | Runs tests, verifies files exist with correct content, reports PASS/FAIL with evidence | Fixes code, softens findings |
-| **Auditor** (evaluator #2) | Grades each acceptance criterion 1-10 with file:line evidence, finds problems | Fixes code, praises work, talks itself out of findings |
+| **Auditor** (evaluator #2) | Grades each acceptance criterion 1-10 with file:line evidence, finds problems | Fixes code, praises work, drops findings it can support, invents findings it can't |
 
 ## Key Rules
 
 1. **Generator never evaluates itself.** Developer doesn't grade its own code.
-2. **Evaluator is skeptical by default.** Auditor prompt: *"Find problems, not praise. If unsure, treat it as a bug. Never talk yourself out of a finding."*
+2. **Evaluator is skeptical by default.** The Auditor looks for problems, not praise, and backs each finding with evidence. It reports a suspected bug as unconfirmed rather than dropping it or overstating it (full wording in `references/auditor-prompt.md`).
 3. **Hard threshold: >9/10 per criterion.** Not 7. Not "close enough."
 4. **Loops are expected.** 2-3 iterations per sprint is normal and healthy.
 5. **Orchestrator reads every report.** No blind trust — verify the evaluator actually ran the checks.
@@ -154,7 +154,7 @@ If the project has `.claude/rules/testing-gates.md`, `.codex/rules/testing-gates
 The auditor (spawned fresh, ideally as a dedicated reviewer custom agent, `feature-dev:code-reviewer`, or an equivalent review skill) must be **skeptical by default**:
 
 1. **Self-evaluation is unreliable.** Never let the generator evaluate its own output.
-2. **Skepticism must be explicitly prompted.** Auditor prompt: *"You are a skeptical reviewer. Your job is to find problems, not praise. If unsure whether something is a bug, treat it as a bug. Never talk yourself out of a finding."*
+2. **Skepticism must be explicitly prompted, and tied to evidence.** Use the Identity section of `references/auditor-prompt.md`: find problems, not praise; cite evidence for every finding; report suspected bugs as unconfirmed with the check that would settle them; say so when a criterion is fully covered.
 3. **Test deeply, not superficially.** Probe edge cases, don't just check happy paths.
 4. **Grade against concrete criteria.** Each sprint has acceptance criteria. Grade against THOSE with file:line references. Not vibes.
 5. **Hard thresholds, not soft suggestions.** If ANY criterion is below threshold, the sprint FAILS. No exceptions.
